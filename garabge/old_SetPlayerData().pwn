@@ -16,3 +16,26 @@ stock SetPlayerData(playerid, data, dataMysql[], value, dataType) {
 	PlayerData[playerid][data] = __:value;
 	return 1;
 }
+
+stock SetPlayerDataArray(playerid, data, dataMysql[], const value[], valueSize, dataType) {
+	new playerName[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, playerName, sizeof(playerName));
+
+	new query[128];
+	if (dataType == data_string) {
+		format(query, sizeof(query), "UPDATE users SET `%s` = '%s' WHERE name = '%s'", dataMysql, value, playerName);
+	} else {
+		new arrayString[128];
+		ArrayToString(value, valueSize, arrayString, sizeof(arrayString));			
+		format(query, sizeof(query), "UPDATE users SET `%s` = '%s' WHERE name = '%s'", dataMysql, arrayString, playerName);
+	}
+
+	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
+	//SendClientMessage(playerid, 0xFFA500AA, query);
+
+	for (new i = 0; i < valueSize; i++) {
+		PlayerData[playerid][data + i] = value[i];
+	}
+
+	return 1;
+}

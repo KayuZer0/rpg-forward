@@ -134,18 +134,10 @@ new PlayerData[MAX_PLAYERS][pData];
 new gMySqlRaceCheck[MAX_PLAYERS];
 
 main() {
-	new data[][] = {"pAdmin", "pMoney"};
-	new values[] = {3, 0.501};
-
 	new data2[][] = {"pEmail", "pBanReason"};
-	new values2[][] = {{1, 1}, {0, 0}};
-	SetPlayerDataArrayTwo(0, data2, values2, "ii", "22", sizeof(data2));
+	new values2[][] = {{1, 1, 3, 7}, "Nigga"};
+	SetPlayerDataArrayTwo(0, data2, values2, "is", "42", sizeof(data2));
 
-	printf("%d", values2[0]);
-	//printf("%d", sizeof(values2[0]));
-	//printf("IS STRING: %d", IsString(data2[0], strlen(data2[0])));
-
-	//SetPlayerData(0, data, values, sizeof(data));
 	return 1;
 }
 
@@ -714,9 +706,10 @@ stock SetPlayerData(playerid, data[][], values[], dataSize) {
 	return 1;
 }
 
-stock SetPlayerDataArrayTwo(playerid, data[][], values[][], valueTypes[], valueSizes[], dataSize) {
+stock SetPlayerDataArrayTwo(playerid, data[][], values[][], const valueTypes[], const valueSizes[], dataSize) {
 	new bufferDataStr[256];
 	new bufferValueStr[256];
+	new arrToStr[32];
 
 	new playerName[MAX_PLAYER_NAME];
 	GetPlayerName(playerid, playerName, sizeof(playerName));
@@ -740,13 +733,12 @@ stock SetPlayerDataArrayTwo(playerid, data[][], values[][], valueTypes[], valueS
 				(i < dataSize - 1) ? ", " : "");
 		} else {
 			
-			new arrToStr[32];
-			ArrayToString(values[i], strval(valueSizes[i]), arrToStr, sizeof(arrToStr));
+			ArrayToString(values[i], valueSizes[i] - '0', arrToStr, sizeof(arrToStr));
 			printf("Array to string: %s", arrToStr);
 
-			format(bufferValueStr, sizeof(bufferValueStr), "%s[%d]%s",
+			format(bufferValueStr, sizeof(bufferValueStr), "%s%s%s",
 				bufferValueStr,
-				values[i],
+				arrToStr,
 				(i < dataSize - 1) ? ", " : "");
 		}
 	}
@@ -755,29 +747,6 @@ stock SetPlayerDataArrayTwo(playerid, data[][], values[][], valueTypes[], valueS
 	format(query, sizeof(query), "UPDATE users SET (%s) = (%s) WHERE name = '%s'", bufferDataStr, bufferValueStr, playerName);
 	printf(query);
 	//mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
-	return 1;
-}
-
-stock SetPlayerDataArray(playerid, data, dataMysql[], const value[], valueSize, dataType) {
-	new playerName[MAX_PLAYER_NAME];
-	GetPlayerName(playerid, playerName, sizeof(playerName));
-
-	new query[128];
-	if (dataType == data_string) {
-		format(query, sizeof(query), "UPDATE users SET `%s` = '%s' WHERE name = '%s'", dataMysql, value, playerName);
-	} else {
-		new arrayString[128];
-		ArrayToString(value, valueSize, arrayString, sizeof(arrayString));			
-		format(query, sizeof(query), "UPDATE users SET `%s` = '%s' WHERE name = '%s'", dataMysql, arrayString, playerName);
-	}
-
-	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
-	//SendClientMessage(playerid, 0xFFA500AA, query);
-
-	for (new i = 0; i < valueSize; i++) {
-		PlayerData[playerid][data + i] = value[i];
-	}
-
 	return 1;
 }
 

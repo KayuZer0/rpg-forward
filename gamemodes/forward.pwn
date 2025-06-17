@@ -134,9 +134,9 @@ new PlayerData[MAX_PLAYERS][pData];
 new gMySqlRaceCheck[MAX_PLAYERS];
 
 main() {
-	new data2[][] = {"pEmail", "pBanReason"};
-	new values2[][] = {{1, 1, 3, 7}, "Nigga"};
-	SetPlayerDataArrayTwo(0, data2, values2, "is", "42", sizeof(data2));
+	//new data[][] = {"pBannedBy", "pBanReason"};
+	//new values[2][128]; values[0] = "authorName"; values[1][0] = 0; values[1][1] = 1;
+	//SetPlayerDataArray(0, data, values, "si", {0,2}, sizeof(data));
 
 	return 1;
 }
@@ -170,7 +170,7 @@ public OnPlayerConnect(playerid) {
 
 	new query[256];
 
-	format(query, sizeof(query), "SELECT * FROM users WHERE name = '%s' LIMIT 1", PlayerData[playerid][pName]);
+	format(query, sizeof(query), "SELECT * FROM users WHERE pName = '%s' LIMIT 1", PlayerData[playerid][pName]);
 	mysql_tquery(db, query, "OnPlayerDataLoaded", "dd", playerid, gMySqlRaceCheck[playerid]);
 
 	return 1;
@@ -342,7 +342,7 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 			SHA256_Hash(pRegisterCachePassword[playerid], PlayerData[playerid][pSalt], PlayerData[playerid][pPassword]);
 
 			new query[221];
-			format(query, sizeof(query), "INSERT INTO `users` (`name`, `password`, `salt`, `email`, `age`) VALUES ('%s', '%s', '%s', '%s', '%d')", PlayerData[playerid][pName], PlayerData[playerid][pPassword], PlayerData[playerid][pSalt], pRegisterCacheEmail[playerid], pRegisterCacheAge[playerid]);
+			format(query, sizeof(query), "INSERT INTO `users` (`pName`, `pPassword`, `pSalt`, `pEmail`, `pAge`) VALUES ('%s', '%s', '%s', '%s', '%d')", PlayerData[playerid][pName], PlayerData[playerid][pPassword], PlayerData[playerid][pSalt], pRegisterCacheEmail[playerid], pRegisterCacheAge[playerid]);
 			mysql_tquery(db, query, "OnPlayerRegistered", "d", playerid);
 			
 			return 1;
@@ -358,6 +358,11 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 }
 
 CMD:testset(playerid, params[]) {
+	new data[][] = {"pEmail"}; new values[][] = {"noemail"};
+	new data2[][] = {"pAdmin"}; new values2[] = {0};
+
+	SetPlayerData(playerid, data2, values2, sizeof(data2));
+	SetPlayerDataArray(playerid, data, values, "s", {0}, sizeof(data));
 	return 1;
 }
 
@@ -448,8 +453,9 @@ CMD:ban(playerid, params[]) {
 		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s for %d days. Reason: %s", targetName, authorName, duration, reason);
 	}
 
-	SetPlayerDataArray(targetid, pBannedBy, "banned_by", authorName, sizeof(authorName), data_string);
-	SetPlayerDataArray(targetid, pBanReason, "ban_reason", reason, sizeof(authorName), data_string);
+	new data[][] = {"pBannedBy", "pBanReason"};
+	new values[2][128]; values[0] = authorName; values[1] = reason;
+	SetPlayerDataArray(playerid, data, values, "ss", {0}, sizeof(data));
 
 	Kick(targetid);
 
@@ -657,7 +663,7 @@ CMD:spawncar(playerid, params[]) {
 
 stock AssignInitialPlayerData(playerid) {
 
-	cache_get_value_int(0, "money", PlayerData[playerid][pMoney]);
+	cache_get_value_int(0, "pMoney", PlayerData[playerid][pMoney]);
 	cache_get_value_int(0, "pAdmin", PlayerData[playerid][pAdmin]);
 
 	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
@@ -666,87 +672,81 @@ stock AssignInitialPlayerData(playerid) {
 }
 
 stock SetPlayerData(playerid, data[][], values[], dataSize) {
-	new bufferDataStr[256];
-	new bufferValueStr[256];
+	new bufferDataValueStr[128];
 
 	new playerName[MAX_PLAYER_NAME];
 	GetPlayerName(playerid, playerName, sizeof(playerName));
 
 	for (new i = 0; i < dataSize; i++) {
-		SendClientMessage(playerid, COLOR_ORANGE, data[i]);
+		new bufferDataStr[256];
+		new bufferValueStr[256];
+
+		//SendClientMessage(playerid, COLOR_ORANGE, data[i]);
 
 		new trueData = FieldFromName(data[i]);
 		PlayerData[playerid][trueData] = values[i];
 
-        format(bufferDataStr, sizeof(bufferDataStr), "%s`%s`%s",
-            bufferDataStr,
-            data[i],
-            (i < dataSize - 1) ? ", " : "");
+        format(bufferDataStr, sizeof(bufferDataStr), "%s", data[i]);
 
 		// if (is int) {}
         if (values[i] == floatround(values[i], floatround_ceil)) {
-			printf("IS INT");
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%d%s",
+			format(bufferValueStr, sizeof(bufferValueStr), "%s%d",
 				bufferValueStr,
-				values[i],
-				(i < dataSize - 1) ? ", " : "");
+				values[i]);
 		} else {
-			printf("IS NOT INT");
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%f%s",
+			format(bufferValueStr, sizeof(bufferValueStr), "%s%f",
 				bufferValueStr,
-				Float: values[i],
-				(i < dataSize - 1) ? ", " : "");
+				Float: values[i]);
 		}
+		
+		format(bufferDataValueStr, sizeof(bufferDataValueStr), "%s`%s` = '%s'%s", bufferDataValueStr, bufferDataStr, bufferValueStr, (i < dataSize - 1) ? ", " : "");
 	}
 
 	new query[256];
-	format(query, sizeof(query), "UPDATE users SET (%s) = (%s) WHERE name = '%s'", bufferDataStr, bufferValueStr, playerName);
-	printf(query);
-	//mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
+	format(query, sizeof(query), "UPDATE `users` SET %s WHERE `pName` = '%s'", bufferDataValueStr, playerName);
+	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
 	return 1;
 }
 
-stock SetPlayerDataArrayTwo(playerid, data[][], values[][], const valueTypes[], const valueSizes[], dataSize) {
-	new bufferDataStr[256];
-	new bufferValueStr[256];
-	new arrToStr[32];
+stock SetPlayerDataArray(playerid, data[][], values[][], const valueTypes[], const valueSizes[], dataSize) {
+	new bufferDataValueStr[256];
 
 	new playerName[MAX_PLAYER_NAME];
 	GetPlayerName(playerid, playerName, sizeof(playerName));
 
 	for (new i = 0; i < dataSize; i++) {
-		SendClientMessage(playerid, COLOR_ORANGE, data[i]);
+		new bufferDataStr[128];
+		new bufferValueStr[256];
+
+		new arrToStr[32];
+
+		//SendClientMessage(playerid, COLOR_ORANGE, data[i]);
 
 		new trueData = FieldFromName(data[i]);
 		PlayerData[playerid][trueData] = values[i][0];
 
-        format(bufferDataStr, sizeof(bufferDataStr), "%s`%s`%s",
-            bufferDataStr,
-            data[i],
-            (i < dataSize - 1) ? ", " : "");
+        format(bufferDataStr, sizeof(bufferDataStr), "%s", data[i]);
 
 		// if (is int) {}
         if (valueTypes[i] == 's') {
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%s%s",
+			format(bufferValueStr, sizeof(bufferValueStr), "%s%s",
 				bufferValueStr,
-				values[i],
-				(i < dataSize - 1) ? ", " : "");
+				values[i]);
 		} else {
 			
-			ArrayToString(values[i], valueSizes[i] - '0', arrToStr, sizeof(arrToStr));
-			printf("Array to string: %s", arrToStr);
-
+			ArrayToString(values[i], valueSizes[i], arrToStr, sizeof(arrToStr));
 			format(bufferValueStr, sizeof(bufferValueStr), "%s%s%s",
 				bufferValueStr,
 				arrToStr,
 				(i < dataSize - 1) ? ", " : "");
 		}
+
+		format(bufferDataValueStr, sizeof(bufferDataValueStr), "%s`%s` = '%s'%s", bufferDataValueStr, bufferDataStr, bufferValueStr, (i < dataSize - 1) ? ", " : "");
 	}
 
 	new query[256];
-	format(query, sizeof(query), "UPDATE users SET (%s) = (%s) WHERE name = '%s'", bufferDataStr, bufferValueStr, playerName);
-	printf(query);
-	//mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
+	format(query, sizeof(query), "UPDATE `users` SET %s WHERE `pName` = '%s'", bufferDataValueStr, playerName);
+	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
 	return 1;
 }
 
@@ -754,11 +754,11 @@ forward OnPlayerDataLoaded(playerid, racecheck);
 public OnPlayerDataLoaded(playerid, racecheck) {
 	if (racecheck != gMySqlRaceCheck[playerid]) { return Kick(playerid); }
 
-	cache_get_value_int(0, "banned_until", PlayerData[playerid][pBannedUntil]);
-	cache_get_value(0, "banned_by", PlayerData[playerid][pBannedBy], MAX_PLAYER_NAME);
-	cache_get_value(0, "ban_reason", PlayerData[playerid][pBanReason], 128);
-	cache_get_value(0, "email", PlayerData[playerid][pEmail], 32);
-	cache_get_value_int(0, "age", PlayerData[playerid][pAge]);
+	cache_get_value_int(0, "pBannedUntil", PlayerData[playerid][pBannedUntil]);
+	cache_get_value(0, "pBannedBy", PlayerData[playerid][pBannedBy], MAX_PLAYER_NAME);
+	cache_get_value(0, "pBanReason", PlayerData[playerid][pBanReason], 128);
+	cache_get_value(0, "pEmail", PlayerData[playerid][pEmail], 32);
+	cache_get_value_int(0, "pAge", PlayerData[playerid][pAge]);
 
 	printf("%d", PlayerData[playerid][pBannedUntil]);
 	printf(PlayerData[playerid][pBannedBy]);
@@ -799,8 +799,8 @@ public OnPlayerDataLoaded(playerid, racecheck) {
 
 	new dialog[115];
 	if (cache_num_rows() > 0) {
-		cache_get_value(0, "password", PlayerData[playerid][pPassword], 65);
-		cache_get_value(0, "salt", PlayerData[playerid][pSalt], 17);
+		cache_get_value(0, "pPassword", PlayerData[playerid][pPassword], 65);
+		cache_get_value(0, "pSalt", PlayerData[playerid][pSalt], 17);
 
 		printf(PlayerData[playerid][pPassword]);
 		printf(PlayerData[playerid][pSalt]);
@@ -883,27 +883,6 @@ stock ArrayToString(const arr[], size, dest[], dest_size) {
     }
     strcat(dest, "]", dest_size); // Close the bracket
 }
-
-/*stock FormatArrayToString(const arr[], size, dest[], destSize){
-    strcopy(dest, "[", destSize);
-	//strcopy(dest[], const source[], maxlength = sizeof (dest)) // start with the opening bracket
-
-    for (new i = 0; i < size; i++)
-    {
-        new tmp[12]; // enough to hold an int
-        format(tmp, sizeof(tmp), "%d", arr[i]);
-        strcat(dest, tmp, destSize);
-
-        if (i < size - 1)
-        {
-            strcat(dest, ", ", destSize); // comma and space
-        }
-    }
-
-    strcat(dest, "]", destSize);
-	
-	return 1;
-}*/
 
 stock ChangePlayerMoney(playerid, money, changeMode = add) {
 	switch (changeMode) {
@@ -1161,7 +1140,6 @@ stock abs(value) {
 stock IsFloat(value) {
 	return value == floatround(values[i], floatround_ceil);
 }
-
 
 stock DelayKick(playerid, wait = 500) {
 	SetTimerEx("OnDelayKick", wait, false, "i", playerid);

@@ -1,113 +1,3 @@
-stock SetPlayerData(playerid, data[][], values[], dataSize) {
-	new bufferDataValueStr[128];
-
-	new playerName[MAX_PLAYER_NAME];
-	GetPlayerName(playerid, playerName, sizeof(playerName));
-
-	for (new i = 0; i < dataSize; i++) {
-		new bufferDataStr[256];
-		new bufferValueStr[256];
-
-		//SendClientMessage(playerid, COLOR_ORANGE, data[i]);
-
-		new trueData = FieldFromName(data[i]);
-		PlayerData[playerid][trueData] = values[i];
-
-        format(bufferDataStr, sizeof(bufferDataStr), "%s", data[i]);
-
-		// if (is int) {}
-        if (values[i] == floatround(values[i], floatround_ceil)) {
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%d",
-				bufferValueStr,
-				values[i]);
-		} else {
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%f",
-				bufferValueStr,
-				Float: values[i]);
-		}
-		
-		format(bufferDataValueStr, sizeof(bufferDataValueStr), "%s`%s` = '%s'%s", bufferDataValueStr, bufferDataStr, bufferValueStr, (i < dataSize - 1) ? ", " : "");
-	}
-
-	new query[256];
-	format(query, sizeof(query), "UPDATE `users` SET %s WHERE `pName` = '%s'", bufferDataValueStr, playerName);
-	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
-	return 1;
-}
-
-stock SetPlayerDataArray(playerid, data[][], values[][], const valueTypes[], const valueSizes[], dataSize) {
-	new bufferDataValueStr[256];
-
-	new playerName[MAX_PLAYER_NAME];
-	GetPlayerName(playerid, playerName, sizeof(playerName));
-
-	for (new i = 0; i < dataSize; i++) {
-		new bufferDataStr[128];
-		new bufferValueStr[256];
-
-		new arrToStr[32];
-
-		//SendClientMessage(playerid, COLOR_ORANGE, data[i]);
-
-		new trueData = FieldFromName(data[i]);
-		PlayerData[playerid][trueData] = values[i][0];
-
-        format(bufferDataStr, sizeof(bufferDataStr), "%s", data[i]);
-
-		// if (is int) {}
-        if (valueTypes[i] == 's') {
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%s",
-				bufferValueStr,
-				values[i]);
-		} else {
-			
-			ArrayToString(values[i], valueSizes[i], arrToStr, sizeof(arrToStr));
-			format(bufferValueStr, sizeof(bufferValueStr), "%s%s%s",
-				bufferValueStr,
-				arrToStr,
-				(i < dataSize - 1) ? ", " : "");
-		}
-
-		format(bufferDataValueStr, sizeof(bufferDataValueStr), "%s`%s` = '%s'%s", bufferDataValueStr, bufferDataStr, bufferValueStr, (i < dataSize - 1) ? ", " : "");
-	}
-
-	new query[256];
-	format(query, sizeof(query), "UPDATE `users` SET %s WHERE `pName` = '%s'", bufferDataValueStr, playerName);
-	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
-	return 1;
-}
-
-forward OnPlayerDataSet(playerid);
-public OnPlayerDataSet(playerid) {
-	if (!mysql_errno(db))
-    {
-        printf("Data inserted successfuly!");
-    }
-    else
-    {
-        printf("Error [%d] when inserting data!", mysql_errno(db));
-    }
-    return 1;
-}
-
-stock ChangePlayerMoney(playerid, money, changeMode = add) {
-	switch (changeMode) {
-		case add: {
-			GivePlayerMoney(playerid, money);
-
-			new data[][] = {"pMoney"};
-			new values[1]; values[0] = PlayerData[playerid][pMoney] + money;
-			SetPlayerData(playerid, data, values, sizeof(data));
-		}
-		case set: {
-			GivePlayerMoney(playerid, money - PlayerData[playerid][pMoney]);
-			new data[][] = {"pMoney"};
-			new values[1]; values[0] = money;
-			SetPlayerData(playerid, data, values, sizeof(data));
-		}	
-	}
-}
-
 stock ArrayToString(const arr[], size, dest[], dest_size) {
     format(dest, dest_size, "["); // Start with the opening bracket
     for (new i = 0; i < size; i++)
@@ -151,10 +41,20 @@ public OnDelayKick(playerid) {
 	return 1;
 }
 
-stock HasAdminLevel(playerid, minimumLevel) {
-    if (PlayerData[playerid][pAdmin] < minimumLevel) {
-        SendClientMessage(playerid, COLOR_DARKNICERED, ERR_ADMIN_LEVEL);
-        return 0;
-    }
-    return 1;
+stock FieldFromName(const fieldName[]) {
+    if (!strcmp(fieldName, "pIsLoggedIn", true)) return pIsLoggedIn;
+    if (!strcmp(fieldName, "pLoginAttempts", true)) return pLoginAttempts;
+    if (!strcmp(fieldName, "pLoginTimer", true)) return pLoginTimer;
+    if (!strcmp(fieldName, "pName", true)) return pName;
+    if (!strcmp(fieldName, "pEmail", true)) return pEmail;
+    if (!strcmp(fieldName, "pAge", true)) return pAge;
+    if (!strcmp(fieldName, "pPassword", true)) return pPassword;
+    if (!strcmp(fieldName, "pSalt", true)) return pSalt;
+    if (!strcmp(fieldName, "pCacheID", true)) return pCacheID;
+    if (!strcmp(fieldName, "pBannedUntil", true)) return pBannedUntil;
+    if (!strcmp(fieldName, "pBannedBy", true)) return pBannedBy;
+    if (!strcmp(fieldName, "pBanReason", true)) return pBanReason;
+    if (!strcmp(fieldName, "pAdmin", true)) return pAdmin;
+    if (!strcmp(fieldName, "pMoney", true)) return pMoney;
+    return -1;
 }

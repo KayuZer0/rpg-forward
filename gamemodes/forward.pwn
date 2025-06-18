@@ -134,6 +134,7 @@ new PlayerData[MAX_PLAYERS][pData];
 new gMySqlRaceCheck[MAX_PLAYERS];
 
 #include <utils>
+#include <datamanip>
 #include <admincmds>
 #include <gui>
 
@@ -141,6 +142,7 @@ main() {
 	//new data[][] = {"pBannedBy", "pBanReason"};
 	//new values[2][128]; values[0] = "authorName"; values[1][0] = 0; values[1][1] = 1;
 	//SetPlayerDataArray(0, data, values, "si", {0,2}, sizeof(data));
+
 	return 1;
 }
 
@@ -358,129 +360,4 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 	}
 
 	return 0;
-}
-
-stock AssignInitialPlayerData(playerid) {
-
-	cache_get_value_int(0, "pMoney", PlayerData[playerid][pMoney]);
-	cache_get_value_int(0, "pAdmin", PlayerData[playerid][pAdmin]);
-
-	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
-
-	return 1;
-}
-
-forward OnPlayerDataLoaded(playerid, racecheck);
-public OnPlayerDataLoaded(playerid, racecheck) {
-	if (racecheck != gMySqlRaceCheck[playerid]) { return Kick(playerid); }
-
-	cache_get_value_int(0, "pBannedUntil", PlayerData[playerid][pBannedUntil]);
-	cache_get_value(0, "pBannedBy", PlayerData[playerid][pBannedBy], MAX_PLAYER_NAME);
-	cache_get_value(0, "pBanReason", PlayerData[playerid][pBanReason], 128);
-	cache_get_value(0, "pEmail", PlayerData[playerid][pEmail], 32);
-	cache_get_value_int(0, "pAge", PlayerData[playerid][pAge]);
-
-	printf("%d", PlayerData[playerid][pBannedUntil]);
-	printf(PlayerData[playerid][pBannedBy]);
-	printf(PlayerData[playerid][pBanReason]);
-	if (PlayerData[playerid][pBannedUntil] != 0) 
-	{
-		new bannedUntilString[128];
-
-		if (PlayerData[playerid][pBannedUntil] == -1) 
-		{
-			format(bannedUntilString, sizeof(bannedUntilString), "Permanent (ban will not expire)");
-
-		} 
-		else if (gettime() < PlayerData[playerid][pBannedUntil]) 
-		{
-			new year, month, day, hour, minute, second;
-			stamp2datetime(PlayerData[playerid][pBannedUntil], year, month, day, hour, minute, second);
-			format(bannedUntilString, sizeof(bannedUntilString), "%02d/%02d/%d - %d:%d", day, month, year, hour, minute, second);
-		} 
-
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "You have been banned!");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned until: %s", bannedUntilString);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned by: %s", PlayerData[playerid][pBannedBy]);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned for: %s", PlayerData[playerid][pBanReason]);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-
-		new bannedDialog[128];
-		format(bannedDialog, sizeof(bannedDialog), "\nBanned Until: %s\nBanned by: %s\nBanned for: %s", bannedUntilString, PlayerData[playerid][pBannedBy], PlayerData[playerid][pBanReason]);
-
-		ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, "You have been banned!", bannedDialog, "Quit", "");
-
-		DelayKick(playerid);
-
-		return 1;
-	}
-
-	new dialog[115];
-	if (cache_num_rows() > 0) {
-		cache_get_value(0, "pPassword", PlayerData[playerid][pPassword], 65);
-		cache_get_value(0, "pSalt", PlayerData[playerid][pSalt], 17);
-
-		printf(PlayerData[playerid][pPassword]);
-		printf(PlayerData[playerid][pSalt]);
-
-		PlayerData[playerid][pCacheID] = cache_save();
-
-		format(dialog, sizeof dialog, "This account (%s) is registered. \nPlease login by entering your password in the field below:", PlayerData[playerid][pName]);
-		ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Login", dialog, "Login", "Cancel");
-
-	} else {
-		ShowRegisterMenu(playerid);
-		//format(dialog, sizeof dialog, "Welcome %s, you can register by entering your password in the field below:", PlayerData[playerid][pName]);
-		//ShowPlayerDialog(playerid, DIALOG_REGISTER, DIALOG_STYLE_PASSWORD, "Register", dialog, "Register", "Cancel");
-	}
-
-	return 1;
-}
-
-forward OnPlayerRegistered(playerid);
-public OnPlayerRegistered(playerid) {
-	ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, "Registration", 
-	"Account successfully registered, you have been automatically logged in.", 
-	"Okay", "");
-
-	PlayerData[playerid][pIsLoggedIn] = true;
-
-	PlayerData[playerid][pMoney] = DEFAULT_MONEY;
-	PlayerData[playerid][pAdmin] = DEFAULT_ADMIN;
-	PlayerData[playerid][pEmail] = pRegisterCacheEmail[playerid];
-	PlayerData[playerid][pAge] = pRegisterCacheAge[playerid];
-
-	format(pRegisterCacheEmail[playerid], sizeof(pRegisterCacheEmail[]), "");
-	pRegisterCacheAge[playerid] = 0;
-	format(pRegisterCachePassword[playerid], sizeof(pRegisterCachePassword[]), "");
-	format(pRegisterCacheRepeatPassword[playerid], sizeof(pRegisterCacheRepeatPassword[]), "");
-
-	HideRegisterMenu(playerid);
-
-	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
-
-	SetSpawnInfo(playerid, NO_TEAM, 0, 1958.33, 1343.12, 15.36, 269.15, WEAPON_SAWEDOFF, 36, WEAPON_UZI, 150, WEAPON_FIST, 0);
-	SpawnPlayer(playerid);
-	
-	return 1;
-}
-
-stock FieldFromName(const fieldName[]) {
-    if (!strcmp(fieldName, "pIsLoggedIn", true)) return pIsLoggedIn;
-    if (!strcmp(fieldName, "pLoginAttempts", true)) return pLoginAttempts;
-    if (!strcmp(fieldName, "pLoginTimer", true)) return pLoginTimer;
-    if (!strcmp(fieldName, "pName", true)) return pName;
-    if (!strcmp(fieldName, "pEmail", true)) return pEmail;
-    if (!strcmp(fieldName, "pAge", true)) return pAge;
-    if (!strcmp(fieldName, "pPassword", true)) return pPassword;
-    if (!strcmp(fieldName, "pSalt", true)) return pSalt;
-    if (!strcmp(fieldName, "pCacheID", true)) return pCacheID;
-    if (!strcmp(fieldName, "pBannedUntil", true)) return pBannedUntil;
-    if (!strcmp(fieldName, "pBannedBy", true)) return pBannedBy;
-    if (!strcmp(fieldName, "pBanReason", true)) return pBanReason;
-    if (!strcmp(fieldName, "pAdmin", true)) return pAdmin;
-    if (!strcmp(fieldName, "pMoney", true)) return pMoney;
-    return -1;
 }

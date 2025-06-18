@@ -31,22 +31,18 @@ CMD:ban(playerid, params[]) {
 
 	if (duration == 0) {
 		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s. Reason: %s", targetName, authorName, reason);
-
-		new data[][] = {"pBannedUntil"};
-		new values[] = {-1};
-		SetPlayerData(playerid, data, values, sizeof(data));
+		PlayerData[targetid][pBannedUntil] = 0;
 	} else {
 		new bannedUntil = gettime() + (duration * 86400);
 
-		new data[][] = {"pBannedUntil"};
-		new values[1]; values[0] = bannedUntil;
-		SetPlayerData(playerid, data, values, sizeof(data));
+		PlayerData[targetid][pBannedUntil] = bannedUntil;
 		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s for %d days. Reason: %s", targetName, authorName, duration, reason);
 	}
 
-	new data[][] = {"pBannedBy", "pBanReason"};
-	new values[2][128]; values[0] = authorName; values[1] = reason;
-	SetPlayerDataArray(playerid, data, values, "ss", {0}, sizeof(data));
+	PlayerData[targetid][pBannedBy] = authorName;
+	PlayerData[targetid][pBanReason] = reason;
+
+	SavePlayer(targetid);
 
 	Kick(targetid);
 
@@ -118,9 +114,8 @@ CMD:setadmin(playerid, params[]) {
 		return 1;
 	}
 
-	new data[][] = {"pAdmin"};
-	new values[1]; values[0] = level;
-	SetPlayerData(targetid, data, values, sizeof(data));
+	PlayerData[targetid][pAdmin] = level;
+	SavePlayer(targetid);
 
 	SendClientMessage(playerid, 0xFFA500AA, "You set %s's Admin Level to %d.", targetName, level);
 	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your Admin Level to %d.", authorName, level);
@@ -319,11 +314,6 @@ CMD:reloaduser(playerid, params[]) {
 }
 
 CMD:testset(playerid, params[]) {
-	new data[][] = {"pEmail"}; new values[][] = {"noemail"};
-	new data2[][] = {"pAdmin"}; new values2[] = {0};
-
-	SetPlayerData(playerid, data2, values2, sizeof(data2));
-	SetPlayerDataArray(playerid, data, values, "s", {0}, sizeof(data));
 	return 1;
 }
 

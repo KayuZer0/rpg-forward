@@ -1,0 +1,333 @@
+#define CMD_NEEDADMIN(%0) if (PlayerData[playerid][pAdmin] < %0) { SendClientMessage(playerid, COLOR_DARKNICERED, ERR_ADMIN_LEVEL); return 1; }
+
+#define CMD_USAGE(%0) SendClientMessage(playerid, COLOR_DARKNICERED, "[USAGE]: %s", %0); return 1;
+
+#define CMD_NOT_ON_SELF if (playerid == targetid) { SendClientMessage(playerid, COLOR_DARKNICERED, ERR_NOT_ON_YOURSELF); return 1; }
+
+#define CMD_MUST_BE_CONNECTED(%0) if (!IsPlayerConnected(%0)) { SendClientMessage(playerid, COLOR_DARKNICERED, ERR_NO_PLAYER_FOUND); return 1; }
+
+#define CMD_AUTHOR_NAME new authorName[MAX_PLAYER_NAME]; GetPlayerName(playerid, authorName, sizeof(authorName))
+
+#define CMD_TARGET_NAME new targetName[MAX_PLAYER_NAME]; GetPlayerName(targetid, targetName, sizeof(targetName))
+
+CMD:ban(playerid, params[]) {
+	new targetid, duration, reason[128];
+
+	CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "iis[128]", targetid, duration, reason)){
+		CMD_USAGE("/ban <id> <days (0 = permanent)> <reason>")
+	}
+
+	CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+	CMD_MUST_BE_CONNECTED(targetid)
+
+	if (duration < 0) {
+		SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE);
+		return 1;
+	}
+
+	if (duration == 0) {
+		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s. Reason: %s", targetName, authorName, reason);
+
+		new data[][] = {"pBannedUntil"};
+		new values[] = {-1};
+		SetPlayerData(playerid, data, values, sizeof(data));
+	} else {
+		new bannedUntil = gettime() + (duration * 86400);
+
+		new data[][] = {"pBannedUntil"};
+		new values[1]; values[0] = bannedUntil;
+		SetPlayerData(playerid, data, values, sizeof(data));
+		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s for %d days. Reason: %s", targetName, authorName, duration, reason);
+	}
+
+	new data[][] = {"pBannedBy", "pBanReason"};
+	new values[2][128]; values[0] = authorName; values[1] = reason;
+	SetPlayerDataArray(playerid, data, values, "ss", {0}, sizeof(data));
+
+	Kick(targetid);
+
+	return 1;
+}
+
+CMD:kick(playerid, params[]) {
+	new targetid, reason[128];
+
+	CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+	CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "is[128]", targetid, reason)){
+        CMD_USAGE("/kick <id> <reason>")
+	}
+
+    CMD_MUST_BE_CONNECTED(targetid)
+
+	SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was kicked by Admin %s. Reason: %s", targetName, authorName, reason);
+	Kick(targetid);
+
+	return 1;
+}
+
+CMD:slap(playerid, params[]) {
+    new targetid;
+
+    CMD_NEEDADMIN(1)
+
+    if (sscanf(params, "i", targetid)){
+        CMD_USAGE("/slap <id>")
+	}
+
+    CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+    CMD_MUST_BE_CONNECTED(targetid)
+
+    new Float: x, Float: y, Float: z;
+    GetPlayerPos(targetid, x, y, z);
+    SetPlayerPos(targetid, x, y, z + 1.5);
+
+    SendClientMessage(playerid, 0xFFA500AA, "You slapped %s.", targetName);
+	SendClientMessage(targetid, 0xFFA500AA, "Admin %s slapped you.", authorName);
+
+    return 1;
+}
+
+CMD:setadmin(playerid, params[]) {
+	new targetid, level;
+
+    CMD_NEEDADMIN(7)
+
+	if (sscanf(params, "ii", targetid, level)){
+        CMD_USAGE("/setadmin <id> <level>")
+	}
+    
+	CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+	CMD_NOT_ON_SELF
+
+	CMD_MUST_BE_CONNECTED(targetid)
+
+	if (level > MAX_ADMIN_LEVEL || level < 0) {
+		SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE);
+		return 1;
+	}
+
+	new data[][] = {"pAdmin"};
+	new values[1]; values[0] = level;
+	SetPlayerData(targetid, data, values, sizeof(data));
+
+	SendClientMessage(playerid, 0xFFA500AA, "You set %s's Admin Level to %d.", targetName, level);
+	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your Admin Level to %d.", authorName, level);
+
+	return 1;
+
+}
+
+CMD:setmoney(playerid, params[]) {
+	new targetid, money;
+
+	CMD_NEEDADMIN(5)
+
+	if (sscanf(params, "ii", targetid, money)){
+		CMD_USAGE("/setmoney <id> <amount>")
+	}
+
+	CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+	CMD_MUST_BE_CONNECTED(targetid)
+
+	if (money > 999999999 || money < 0) {SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE); return 1;}
+
+	ChangePlayerMoney(targetid, money, set);
+
+	SendClientMessage(playerid, 0xFFA500AA, "You set %s's money to $%d.", targetName, money);
+	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your money to $%d.", authorName, money);
+
+	return 1;
+}
+
+CMD:givemoney(playerid, params[]) {
+	new targetid, money;
+
+	CMD_NEEDADMIN(5)
+
+	if (sscanf(params, "ii", targetid, money)){
+		CMD_USAGE("/givemoney <id> <amount>")
+	}
+
+    CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+	CMD_MUST_BE_CONNECTED(targetid)
+
+	if (money > 999999999 || (PlayerData[targetid][pMoney] <= 0 && money < 0) || money == 0) {SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE); return 1;}
+
+	ChangePlayerMoney(playerid, money, add);
+
+	if (money < 0) {
+		SendClientMessage(playerid, 0xFFA500AA, "You took $%d from player %s.", abs(money), targetName);
+		SendClientMessage(targetid, 0xFFA500AA, "Admin %s took $%d from you.", authorName, abs(money));
+	} else {
+		SendClientMessage(playerid, 0xFFA500AA, "You gave $%d to player %s.", money, targetName);
+		SendClientMessage(targetid, 0xFFA500AA, "Admin %s gave you $%d.", authorName, money);
+	}
+
+
+	return 1;
+}
+
+CMD:clearchat(playerid, params[]) {
+	new authorName[MAX_PLAYER_NAME];
+	GetPlayerName(playerid, authorName, sizeof(authorName));
+
+	CMD_NEEDADMIN(1)
+
+	for (new i = 0; i < 254; i++) {
+		SendClientMessageToAll(COLOR_WHITE, "");
+	}
+
+	SendClientMessageToAll(0xFFA500AA, "Admin %s cleared the chat.", authorName);
+
+	return 1;
+}
+
+CMD:spawncar(playerid, params[]) {
+	new vehicleid, color1, color2;
+
+	CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "iii", vehicleid, color1, color2)){
+		CMD_USAGE("/spawncar <id> <color1> <color2>")
+	}
+
+	new Float:x, Float:y, Float:z, Float:a;
+	GetPlayerPos(playerid, x, y, z);
+	GetPlayerFacingAngle(playerid, a);
+
+	new spawnedCar = CreateVehicle(vehicleid, x, y, z, a, color1, color2, -1, false);
+
+	PutPlayerInVehicle(playerid, spawnedCar, 0);
+
+	SendClientMessage(playerid, 0xFFA500AA, "Ti-am spawnat bolidu' cumetre. Cu placere se spune.");
+
+	return 1;
+}
+
+CMD:goto(playerid, params[]){
+    new targetid;
+
+    CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "i", targetid)){
+		CMD_USAGE("/goto <id>")
+	}
+
+    CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+    CMD_MUST_BE_CONNECTED(targetid)
+    
+    new Float: x, Float: y, Float: z;
+    new vw = GetPlayerVirtualWorld(targetid);
+
+    GetPlayerPos(targetid, x, y, z);
+    SetPlayerPos(playerid, x, y + 0.25, z);
+    SetPlayerVirtualWorld(playerid, vw);
+
+
+    SendClientMessage(playerid, COLOR_ORANGE, "You teleported to %s.", targetName);
+    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported to you.", authorName);
+
+    return 1;
+}
+
+CMD:gethere(playerid, params[]){
+    new targetid;
+
+    CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "i", targetid)){
+		CMD_USAGE("/gethere <id>")
+	}
+
+    CMD_AUTHOR_NAME;
+    CMD_TARGET_NAME;
+
+    CMD_MUST_BE_CONNECTED(targetid)
+    
+    new Float: x, Float: y, Float: z;
+    new vw = GetPlayerVirtualWorld(playerid);
+
+    GetPlayerPos(playerid, x, y, z);
+    SetPlayerPos(targetid, x, y + 0.25, z);
+    SetPlayerVirtualWorld(targetid, vw);
+
+    SendClientMessage(playerid, COLOR_ORANGE, "You teleported %s to you.", targetName);
+    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported you to them.", authorName);
+
+    return 1;
+}
+
+CMD:a(playerid, params[]) {
+    new message[128];
+
+	CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "s[128]", message)){
+		CMD_USAGE("/a <message>")
+	}
+
+	CMD_AUTHOR_NAME;
+
+    if (strlen(message) < 0) {CMD_USAGE("/a <message>")}
+
+    for (new i = 0; i < MAX_PLAYERS; i++) {
+        if (PlayerData[i][pAdmin] != 0) {
+            SendClientMessage(i, COLOR_DARKNICERED, "(/a) Admin %s: {FF5733}%s", authorName, message);
+        }
+    }
+
+	return 1;
+}
+
+CMD:reloaduser(playerid, params[]) {
+	new targetid;
+
+    CMD_TARGET_NAME;
+
+	CMD_NEEDADMIN(0)
+
+	if (sscanf(params, "i", targetid)){
+		CMD_USAGE("/reloaduser <id>")
+	}
+
+    CMD_MUST_BE_CONNECTED(targetid)
+
+	new query[256];
+	format(query, sizeof(query), "SELECT * FROM users WHERE name = '%s' LIMIT 1", targetName);
+	mysql_tquery(db, query, "OnConnectPullDBValues", "i", playerid);
+	SendClientMessage(playerid, 0xFFFFFFAA, "Requested data.");
+
+	return 1;
+}
+
+CMD:testset(playerid, params[]) {
+	new data[][] = {"pEmail"}; new values[][] = {"noemail"};
+	new data2[][] = {"pAdmin"}; new values2[] = {0};
+
+	SetPlayerData(playerid, data2, values2, sizeof(data2));
+	SetPlayerDataArray(playerid, data, values, "s", {0}, sizeof(data));
+	return 1;
+}
+
+CMD:testget(playerid, params[]){
+	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pAdmin]);
+	return 1;
+}

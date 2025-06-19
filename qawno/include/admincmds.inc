@@ -230,11 +230,12 @@ CMD:goto(playerid, params[]){
     CMD_MUST_BE_CONNECTED(targetid)
     
     new Float: x, Float: y, Float: z;
-    new vw = GetPlayerVirtualWorld(targetid);
 
     GetPlayerPos(targetid, x, y, z);
+
+    SetPlayerVirtualWorld(playerid, GetPlayerVirtualWorld(targetid));
+	SetPlayerInterior(playerid, GetPlayerInterior(targetid));
     SetPlayerPos(playerid, x, y + 0.25, z);
-    SetPlayerVirtualWorld(playerid, vw);
 
 
     SendClientMessage(playerid, COLOR_ORANGE, "You teleported to %s.", targetName);
@@ -258,11 +259,12 @@ CMD:gethere(playerid, params[]){
     CMD_MUST_BE_CONNECTED(targetid)
     
     new Float: x, Float: y, Float: z;
-    new vw = GetPlayerVirtualWorld(playerid);
 
     GetPlayerPos(playerid, x, y, z);
+
+    SetPlayerVirtualWorld(targetid, GetPlayerVirtualWorld(playerid));
+	SetPlayerInterior(targetid, GetPlayerInterior(playerid));
     SetPlayerPos(targetid, x, y + 0.25, z);
-    SetPlayerVirtualWorld(targetid, vw);
 
     SendClientMessage(playerid, COLOR_ORANGE, "You teleported %s to you.", targetName);
     SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported you to them.", authorName);
@@ -292,24 +294,13 @@ CMD:a(playerid, params[]) {
 	return 1;
 }
 
-CMD:reloaduser(playerid, params[]) {
-	new targetid;
+// DEBUG:
 
-    CMD_TARGET_NAME;
-
-	CMD_NEEDADMIN(0)
-
-	if (sscanf(params, "i", targetid)){
-		CMD_USAGE("/reloaduser <id>")
-	}
-
-    CMD_MUST_BE_CONNECTED(targetid)
-
-	new query[256];
-	format(query, sizeof(query), "SELECT * FROM users WHERE name = '%s' LIMIT 1", targetName);
-	mysql_tquery(db, query, "OnConnectPullDBValues", "i", playerid);
-	SendClientMessage(playerid, 0xFFFFFFAA, "Requested data.");
-
+CMD:getpos(playerid, params[]) {
+	new Float: x, Float: y, Float: z, Float: a;
+	GetPlayerPos(playerid, x, y, z);
+	GetPlayerFacingAngle(playerid, a);
+	SendClientMessage(playerid, COLOR_ORANGE, "[POS]: X: %f | Y: %f | Z: %f | ROT: %f", x, y, z, a);
 	return 1;
 }
 

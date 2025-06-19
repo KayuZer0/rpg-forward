@@ -6,6 +6,7 @@
 #include "a_mysql.inc"
 #include "timestamp.inc"
 #include "Pawn.Regex.inc"
+#include <streamer>
 
 #define COLOR_ERROR         0xC0241FFF
 #define COLOR_DARKNICERED 	0x9D000096
@@ -72,6 +73,12 @@
 #define ERR_NO_PLAYER_FOUND "[ERROR]: No player found."
 #define ERR_INVALID_VALUE "[ERROR]: Invalid value."
 
+#define KEY_PRESSED(%0) \
+	(((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
+
+#define KEY_RELEASED(%0) \
+	(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))
+
 new PlayerText: pRegisterMenu_email[MAX_PLAYERS];
 new PlayerText: pRegisterMenu_age[MAX_PLAYERS];
 new PlayerText: pRegisterMenu_password[MAX_PLAYERS];
@@ -102,14 +109,6 @@ enum _:moneyOperations {
 	set
 };
 
-enum _:pDataTypes {
-	data_int,
-	data_float,
-	data_bool,
-	data_array,
-	data_string
-};
-
 enum _:pData
 {
 	bool: pIsLoggedIn,
@@ -135,8 +134,9 @@ new gMySqlRaceCheck[MAX_PLAYERS];
 
 #include <utils>
 #include <datamanip>
-#include <admincmds>
 #include <gui>
+#include <admincmds>
+#include <worldmanip>
 
 main() {
 	//new data[][] = {"pBannedBy", "pBanReason"};
@@ -147,6 +147,7 @@ main() {
 }
 
 public OnGameModeInit() {
+	DisableInteriorEnterExits();
 
 	db = mysql_connect("localhost", "root", "", "rpg-forward", MySQLOpt:0);
 
@@ -157,7 +158,9 @@ public OnGameModeInit() {
 
 	printf("MYSQL CONNECTION SUCCESSFUL!");
 
-	SetGameModeText("Crazy bomboclat!");
+	InitEnex();
+
+	SetGameModeText("Indev");
 	AddPlayerClass(0, 2495.3547, -1688.2319, 13.6774, 351.1646, WEAPON_M4, 500, WEAPON_KNIFE, 1, WEAPON_COLT45, 100);
 	return 1;
 }
@@ -360,4 +363,8 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 	}
 
 	return 0;
+}
+
+public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
+	WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
 }

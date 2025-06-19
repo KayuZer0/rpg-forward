@@ -95,7 +95,7 @@
     },
     "password": "",
     "pawn": {
-        "legacy_plugins": ["mysql", "PawnPlus", "pawnregex"],
+        "legacy_plugins": ["mysql", "PawnPlus", "pawnregex", "streamer"],
         "main_scripts": [
             "forward 1"
         ],

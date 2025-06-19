@@ -8,7 +8,7 @@ stock SavePlayer(playerid) {
 	"UPDATE users SET \
 	`pName` = '%e', \
 	`pEmail` = '%e', \
-	`pAge` = '%e', \
+	`pAge` = '%d', \
 	`pPassword` = '%e', \
 	`pSalt` = '%e', ",
 	
@@ -39,8 +39,6 @@ stock SavePlayer(playerid) {
 	strcat(query, where, sizeof(query));
 
 	mysql_tquery(db, query, "OnPlayerDataSet", "i", playerid);
-
-	printf(query);
 }
 
 forward OnPlayerDataSet(playerid);

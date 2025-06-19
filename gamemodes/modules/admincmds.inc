@@ -10,7 +10,17 @@
 
 #define CMD_TARGET_NAME new targetName[MAX_PLAYER_NAME]; GetPlayerName(targetid, targetName, sizeof(targetName))
 
+#define CMD_MUST_BE_LOGGED_IN if (PlayerData[playerid][pIsLoggedIn] != true) return 1
+
 #define MAX_ADMIN_LEVEL 7
+
+CMD:test(playerid, params[]) {
+	CMD_MUST_BE_LOGGED_IN;
+
+	SendClientMessage(playerid, -1, "lol");
+
+	return 1;
+}
 
 CMD:ban(playerid, params[]) {
 	new targetid, duration, reason[128];

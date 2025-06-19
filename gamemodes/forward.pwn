@@ -70,6 +70,9 @@ public OnGameModeExit() {
 
 	CountDynamic3DTextLabels();
 	DestroyAllDynamic3DTextLabels();
+
+	CountDynamicCPs();
+	DestroyAllDynamicCPs();
 }
 
 public OnPlayerConnect(playerid) {

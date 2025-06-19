@@ -3,6 +3,17 @@ new pRegisterCacheAge[MAX_PLAYERS];
 new pRegisterCachePassword[MAX_PLAYERS][32];
 new pRegisterCacheRepeatPassword[MAX_PLAYERS][32];
 
+#define INPUT_EMAIL "Please input your E-mail address below:"
+#define INPUT_AGE "Please input your age below:"
+#define INPUT_PASS "Please input your password [8-32 chars] below:"
+
+#define ERR_INPUT_EMAIL "Invalid email! Please input your E-mail address below:"
+#define ERR_INPUT_AGE "Invalid age! Please input your age below:"
+#define ERR_INPUT_PASS "Invalid password! Please input your password [8-32 chars] below:"
+
+#define MINIMUM_PASSWORD 8
+#define MAXIMUM_PASSWORD 32
+
 forward REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]);
 public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]) {
 	switch (dialogid) {
@@ -50,8 +61,9 @@ public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, c
 			static Regex:regex;
 			regex = Regex_New("^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$");
 			if (strlen(inputtext) > 32 || strlen(inputtext) < 10 || !Regex_Check(inputtext, regex)) {
-				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_EMAIL, DIALOG_STYLE_INPUT, "E-Mail", "Invalid input! Please input email address.", "Accept", "Cancel");
+				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_EMAIL, DIALOG_STYLE_INPUT, "E-Mail", ERR_INPUT_EMAIL, "Accept", "Cancel");
 			} else {
+                SelectTextDraw(playerid, COLOR_WHITE);
 				strcopy(pRegisterCacheEmail[playerid], inputtext, 128);
 
 				PlayerTextDrawSetString(playerid, pRegisterMenu_emailTypebox[playerid], inputtext);
@@ -60,8 +72,10 @@ public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, c
 		}
 		case DIALOG_REGISTER_INPUT_AGE: {
 			if (strlen(inputtext) <= 0 || strval(inputtext) < 0 || strval(inputtext) > 99) {
-				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_AGE, DIALOG_STYLE_INPUT, "Age", "Invalid input! Please input your age.", "Accept", "Cancel");
+				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_AGE, DIALOG_STYLE_INPUT, "Age", ERR_INPUT_AGE, "Accept", "Cancel");
 			} else {
+                SelectTextDraw(playerid, COLOR_WHITE);
+
 				pRegisterCacheAge[playerid] = strval(inputtext);
 
 				PlayerTextDrawSetString(playerid, pRegisterMenu_ageTypebox[playerid], "%d", strval(inputtext));
@@ -69,9 +83,11 @@ public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, c
 			}
 		}
 		case DIALOG_REGISTER_INPUT_PASSWORD: {
-			if (strlen(inputtext) < 5 || strlen(inputtext) > 32) {
-				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_PASSWORD, DIALOG_STYLE_PASSWORD, "Password", "Invalid input! Please input your password.", "Accept", "Cancel");
+			if (strlen(inputtext) < 8 || strlen(inputtext) > 32) {
+				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_PASSWORD, DIALOG_STYLE_PASSWORD, "Password", ERR_INPUT_PASS, "Accept", "Cancel");
 			} else {
+                SelectTextDraw(playerid, COLOR_WHITE);
+
 				strcopy(pRegisterCachePassword[playerid], inputtext, 32);
 
 				new maskedPassword[32];
@@ -86,9 +102,11 @@ public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, c
 			}
 		}
 		case DIALOG_REGISTER_INPUT_REPEAT_PASSWORD: {
-			if (strlen(inputtext) < 5 || strlen(inputtext) > 32) {
-				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_REPEAT_PASSWORD, DIALOG_STYLE_PASSWORD, "Repeat Password", "Invalid input! Please input your password again.", "Accept", "Cancel");
+			if (strlen(inputtext) < 8 || strlen(inputtext) > 32) {
+				return ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_REPEAT_PASSWORD, DIALOG_STYLE_PASSWORD, "Repeat Password", ERR_INPUT_PASS, "Accept", "Cancel");
 			} else {
+                SelectTextDraw(playerid, COLOR_WHITE);
+
 				strcopy(pRegisterCacheRepeatPassword[playerid], inputtext, 32);
 
 				new maskedPassword[32];
@@ -111,22 +129,26 @@ forward REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playerte
 public REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 	if (playertextid == pRegisterMenu_emailTypebox[playerid])
 	{
-		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_EMAIL, DIALOG_STYLE_INPUT, "E-Mail", "Please input your E-mail address.", "Accept", "Cancel");
+        CancelSelectTextDraw(playerid);
+		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_EMAIL, DIALOG_STYLE_INPUT, "E-Mail", INPUT_EMAIL, "Accept", "Cancel");
 		return 1;
 	}
 	else if (playertextid == pRegisterMenu_ageTypebox[playerid])
 	{
-		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_AGE, DIALOG_STYLE_INPUT, "Age", "Please input your age.", "Accept", "Cancel");
+        CancelSelectTextDraw(playerid);
+		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_AGE, DIALOG_STYLE_INPUT, "Age", INPUT_AGE, "Accept", "Cancel");
 		return 1;
 	}
 	else if (playertextid == pRegisterMenu_passwordTypebox[playerid])
 	{
-		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_PASSWORD, DIALOG_STYLE_PASSWORD, "Password", "Please input your password.", "Accept", "Cancel");
+        CancelSelectTextDraw(playerid);
+		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_PASSWORD, DIALOG_STYLE_PASSWORD, "Password", INPUT_PASS, "Accept", "Cancel");
 		return 1;
 	}
 	else if (playertextid == pRegisterMenu_rePassTypebox[playerid])
 	{
-		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_REPEAT_PASSWORD, DIALOG_STYLE_PASSWORD, "Repeat Password", "Please input your password again.", "Accept", "Cancel");
+        CancelSelectTextDraw(playerid);
+		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_REPEAT_PASSWORD, DIALOG_STYLE_PASSWORD, "Repeat Password", INPUT_PASS, "Accept", "Cancel");
 		return 1;
 	} 
 	else if (playertextid == pRegisterMenu_buttonRegister[playerid])

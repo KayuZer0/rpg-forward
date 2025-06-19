@@ -298,6 +298,28 @@ CMD:a(playerid, params[]) {
 
 // DEBUG:
 
+CMD:enex(playerid, params[]) {
+	new enexid, objid;
+
+	CMD_NEEDADMIN(7)
+
+	new Float: pPos[3];
+	GetPlayerPos(playerid, pPos[0], pPos[1], pPos[2]);
+
+	if (sscanf(params, "ii", enexid, objid)){
+		CMD_USAGE("/enex <enex id> <object id>")
+	}
+
+	if (enexid > MAX_ENEX) {
+		SendClientMessage(playerid, COLOR_ORANGE, "Enex ID too high.");
+		return 1;
+	}
+
+	CreateEnex(enexid, objid, 15, "Test", "Test",  Float: pPos, Float: {207.630004, -110.579940, 1005.132812});
+	SendClientMessage(playerid, COLOR_ORANGE, "Enex created.");
+	return 1;
+}
+
 CMD:getpos(playerid, params[]) {
 	new Float: x, Float: y, Float: z, Float: a;
 	GetPlayerPos(playerid, x, y, z);

@@ -39,8 +39,8 @@ new PlayerData[MAX_PLAYERS][pData];
 #include "../gamemodes/modules/gui.inc"
 
 #include "../gamemodes/modules/register-login.inc"
-#include "../gamemodes/modules/admincmds.inc"
 #include "../gamemodes/modules/enex.inc"
+#include "../gamemodes/modules/admincmds.inc"
 
 
 main() {
@@ -59,6 +59,17 @@ public OnGameModeInit() {
 	InitEnex();
 
 	return 1;
+}
+
+public OnGameModeExit() {
+	CountDynamicPickups();
+	DestroyAllDynamicPickups();
+
+	CountDynamicObjects();
+	DestroyAllDynamicObjects();
+
+	CountDynamic3DTextLabels();
+	DestroyAllDynamic3DTextLabels();
 }
 
 public OnPlayerConnect(playerid) {
@@ -100,6 +111,8 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 
 public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
 	WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+
+	return 1;
 }
 
 stock SavePlayer(playerid) {

@@ -81,3 +81,8 @@
 
 #define KEY_RELEASED(%0) \
 	(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))
+
+#define KEY_HELD(%0) \
+	((newkeys & (%0)) == (%0))
+
+#define DEFAULT_PLAYER_GRAVITY 0.008000

@@ -1,3 +1,8 @@
+enum _:moneyOperations {
+	add,
+	set
+};
+
 stock ArrayToString(const arr[], size, dest[], dest_size) {
     format(dest, dest_size, "["); // Start with the opening bracket
     for (new i = 0; i < size; i++)
@@ -39,4 +44,19 @@ forward OnDelayKick(playerid);
 public OnDelayKick(playerid) {
 	Kick(playerid);
 	return 1;
+}
+
+stock ChangePlayerMoney(playerid, money, changeMode = add) {
+	switch (changeMode) {
+		case add: {
+			GivePlayerMoney(playerid, money);
+			PlayerData[playerid][pMoney] = PlayerData[playerid][pMoney] + money;
+			SavePlayer(playerid);
+		}
+		case set: {
+			GivePlayerMoney(playerid, money - PlayerData[playerid][pMoney]);
+			PlayerData[playerid][pMoney] = money;
+			SavePlayer(playerid);
+		}	
+	}
 }

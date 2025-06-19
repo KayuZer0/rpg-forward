@@ -40,21 +40,3 @@ public OnDelayKick(playerid) {
 	Kick(playerid);
 	return 1;
 }
-
-stock FieldFromName(const fieldName[]) {
-    if (!strcmp(fieldName, "pIsLoggedIn", true)) return pIsLoggedIn;
-    if (!strcmp(fieldName, "pLoginAttempts", true)) return pLoginAttempts;
-    if (!strcmp(fieldName, "pLoginTimer", true)) return pLoginTimer;
-    if (!strcmp(fieldName, "pName", true)) return pName;
-    if (!strcmp(fieldName, "pEmail", true)) return pEmail;
-    if (!strcmp(fieldName, "pAge", true)) return pAge;
-    if (!strcmp(fieldName, "pPassword", true)) return pPassword;
-    if (!strcmp(fieldName, "pSalt", true)) return pSalt;
-    if (!strcmp(fieldName, "pCacheID", true)) return pCacheID;
-    if (!strcmp(fieldName, "pBannedUntil", true)) return pBannedUntil;
-    if (!strcmp(fieldName, "pBannedBy", true)) return pBannedBy;
-    if (!strcmp(fieldName, "pBanReason", true)) return pBanReason;
-    if (!strcmp(fieldName, "pAdmin", true)) return pAdmin;
-    if (!strcmp(fieldName, "pMoney", true)) return pMoney;
-    return -1;
-}

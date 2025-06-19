@@ -49,7 +49,6 @@ stock CreateEnex(id, modelid, interior, const name[], const desc[], Float: x, Fl
     strcopy(EnexData[id][exDesc], name, ENEX_MAX_DESC);
 }
 
-//[POS]: X: 207.630004 | Y: -110.579940 | Z: 1005.132812 | ROT: 358.619445
 
 WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
     if KEY_PRESSED(KEY_SECONDARY_ATTACK) {

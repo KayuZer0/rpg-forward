@@ -10,6 +10,8 @@
 
 #define CMD_TARGET_NAME new targetName[MAX_PLAYER_NAME]; GetPlayerName(targetid, targetName, sizeof(targetName))
 
+#define MAX_ADMIN_LEVEL 7
+
 CMD:ban(playerid, params[]) {
 	new targetid, duration, reason[128];
 

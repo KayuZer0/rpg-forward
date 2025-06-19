@@ -1,0 +1,78 @@
+// COLORS:
+
+#define COLOR_ERROR         0xC0241FFF
+#define COLOR_DARKNICERED 	0x9D000096
+#define TEAM_RADIO_COLOR 	0xF2D068FF
+#define COLOR_LIGHTGREEN 	0x9ACD32AA
+#define COLOR_CHATBUBBLE    0xFFFFFFCC
+#define COLOR_LIGHTBLUE 	0x00C3FFFF
+#define COLOR_LIGHTRED 		0xFF6347FF
+#define COLOR_LGREEN 		0xD7FFB3FF
+#define COLOR_ORANGE        0xFFA500FF
+#define COLOR_GOLD          0xFFB95EFF
+#define COLOR_LIGHTGOLD 	0xFCD482FF
+#define COLOR_MONEY 		0x4dad2bFF
+#define COLOR_CLIENT        0xA9C4E4FF
+#define COLOR_SERVER        0x5F9CC9FF
+#define COLOR_WARNING 		0xDE1414FF
+#define COLOR_ADMCHAT 		0xFFC266AA
+#define COLOR_GRAD1 		0xB4B5B7FF
+#define COLOR_GRAD2 		0xBFC0C2FF
+#define COLOR_GRAD3 		0xCBCCCEFF
+#define COLOR_GRAD4 		0xD8D8D8FF
+#define COLOR_GRAD5 		0xE3E3E3FF
+#define COLOR_GRAD6 		0xF0F0F0FF
+#define COLOR_GREY 			0xAFAFAFAA
+#define COLOR_GREEN 		0x33AA33AA
+#define COLOR_RED 			0xFF0000FF
+#define COLOR_NEWS 			0xFFA500AA
+#define COLOR_LOGIN 		0x00D269FF
+#define COLOR_DEPAR 		0x4646FFFF
+#define COLOR_YELLOW 		0xFFFF00FF
+#define COLOR_WHITE 		0xFFFFFFFF
+#define COLOR_FADE1 		0xE6E6E6E6
+#define COLOR_FADE2 		0xC8C8C8C8
+#define COLOR_FADE3 		0xAAAAAAAA
+#define COLOR_FADE4 		0x8C8C8C8C
+#define COLOR_FADE5 		0x6E6E6E6E
+#define COLOR_PURPLE 		0xC2A2DAAA
+#define COLOR_DBLUE 		0x2641FEAA
+#define COLOR_ALLDEPT 		0xFF8282AA
+#define COLOR_NEWS 			0xFFA500AA
+#define COLOR_DEPART 		0xFF8040FF
+#define COLOR_DEPART2 		0xff3535FF
+#define COLOR_LOGS 			0xE6833CFF
+#define COLOR_BLUE      	0x211CDEC8
+#define COLOR_DARKPINK      0xE7AAA5A5
+#define COLOR_DGREEN    	0xAAFF82FF
+#define COLOR_TUTORIAL      0x2CBD7AFF
+#define COLOR_NICEGREEN     0x8DDE00FF
+
+// DIALOGS:
+
+#define DIALOG_INFO 0
+#define DIALOG_REGISTER_INPUT_EMAIL 1
+#define DIALOG_REGISTER_INPUT_AGE 2
+#define DIALOG_REGISTER_INPUT_PASSWORD 3
+#define DIALOG_REGISTER_INPUT_REPEAT_PASSWORD 4
+#define DIALOG_LOGIN 5
+
+// CONFIRMATION MESSAGES
+
+#define MYSQL_CONNECTED "[MySQL] Connected to database."
+
+// ERRORS
+
+#define ERR_MYSQL_CONNECT "[MySQL] Couldn't connect to the database (%d)."
+#define ERR_ADMIN_LEVEL "[ERROR]: You are not authorized to use that command."
+#define ERR_NOT_ON_YOURSELF "[ERROR]: You can't use that command on yourself."
+#define ERR_NO_PLAYER_FOUND "[ERROR]: No player found."
+#define ERR_INVALID_VALUE "[ERROR]: Invalid value."
+
+// FUNCTIONS
+
+#define KEY_PRESSED(%0) \
+	(((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
+
+#define KEY_RELEASED(%0) \
+	(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))

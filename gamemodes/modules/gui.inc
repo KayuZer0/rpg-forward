@@ -1,3 +1,21 @@
+new PlayerText: pRegisterMenu_email[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_age[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_password[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_rePass[MAX_PLAYERS];
+
+new PlayerText: pRegisterMenu_emailSymbol[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_ageSymbol[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_passwordSymbol[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_rePassSymbol[MAX_PLAYERS];
+
+new PlayerText: pRegisterMenu_emailTypebox[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_ageTypebox[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_passwordTypebox[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_rePassTypebox[MAX_PLAYERS];
+
+new PlayerText: pRegisterMenu_buttonRegister[MAX_PLAYERS];
+new PlayerText: pRegisterMenu_buttonCancel[MAX_PLAYERS];
+
 stock ShowRegisterMenu(playerid) {
 	pRegisterMenu_email[playerid] = CreatePlayerTextDraw(playerid, 222.000, 73.000, "E-mail Address:");
 	PlayerTextDrawLetterSize(playerid, pRegisterMenu_email[playerid], 0.300, 1.500);

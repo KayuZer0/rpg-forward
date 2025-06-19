@@ -8,109 +8,15 @@
 #include "Pawn.Regex.inc"
 #include <streamer>
 
-#define COLOR_ERROR         0xC0241FFF
-#define COLOR_DARKNICERED 	0x9D000096
-#define TEAM_RADIO_COLOR 	0xF2D068FF
-#define COLOR_LIGHTGREEN 	0x9ACD32AA
-#define COLOR_CHATBUBBLE    0xFFFFFFCC
-#define COLOR_LIGHTBLUE 	0x00C3FFFF
-#define COLOR_LIGHTRED 		0xFF6347FF
-#define COLOR_LGREEN 		0xD7FFB3FF
-#define COLOR_ORANGE        0xFFA500FF
-#define COLOR_GOLD          0xFFB95EFF
-#define COLOR_LIGHTGOLD 	0xFCD482FF
-#define COLOR_MONEY 		0x4dad2bFF
-#define COLOR_CLIENT        0xA9C4E4FF
-#define COLOR_SERVER        0x5F9CC9FF
-#define COLOR_WARNING 		0xDE1414FF
-#define COLOR_ADMCHAT 		0xFFC266AA
-#define COLOR_GRAD1 		0xB4B5B7FF
-#define COLOR_GRAD2 		0xBFC0C2FF
-#define COLOR_GRAD3 		0xCBCCCEFF
-#define COLOR_GRAD4 		0xD8D8D8FF
-#define COLOR_GRAD5 		0xE3E3E3FF
-#define COLOR_GRAD6 		0xF0F0F0FF
-#define COLOR_GREY 			0xAFAFAFAA
-#define COLOR_GREEN 		0x33AA33AA
-#define COLOR_RED 			0xFF0000FF
-#define COLOR_NEWS 			0xFFA500AA
-#define COLOR_LOGIN 		0x00D269FF
-#define COLOR_DEPAR 		0x4646FFFF
-#define COLOR_YELLOW 		0xFFFF00FF
-#define COLOR_WHITE 		0xFFFFFFFF
-#define COLOR_FADE1 		0xE6E6E6E6
-#define COLOR_FADE2 		0xC8C8C8C8
-#define COLOR_FADE3 		0xAAAAAAAA
-#define COLOR_FADE4 		0x8C8C8C8C
-#define COLOR_FADE5 		0x6E6E6E6E
-#define COLOR_PURPLE 		0xC2A2DAAA
-#define COLOR_DBLUE 		0x2641FEAA
-#define COLOR_ALLDEPT 		0xFF8282AA
-#define COLOR_NEWS 			0xFFA500AA
-#define COLOR_DEPART 		0xFF8040FF
-#define COLOR_DEPART2 		0xff3535FF
-#define COLOR_LOGS 			0xE6833CFF
-#define COLOR_BLUE      	0x211CDEC8
-#define COLOR_DARKPINK      0xE7AAA5A5
-#define COLOR_DGREEN    	0xAAFF82FF
-#define COLOR_TUTORIAL      0x2CBD7AFF
-#define COLOR_NICEGREEN     0x8DDE00FF
-
-#define DIALOG_INFO 0
-#define DIALOG_REGISTER_INPUT_EMAIL 1
-#define DIALOG_REGISTER_INPUT_AGE 2
-#define DIALOG_REGISTER_INPUT_PASSWORD 3
-#define DIALOG_REGISTER_INPUT_REPEAT_PASSWORD 4
-#define DIALOG_LOGIN 5
-
-#define DEFAULT_MONEY 100000
-#define DEFAULT_ADMIN 0
-
-#define MAX_ADMIN_LEVEL 7
-
-#define ERR_ADMIN_LEVEL "[ERROR]: You are not authorized to use that command."
-#define ERR_NOT_ON_YOURSELF "[ERROR]: You can't use that command on yourself."
-#define ERR_NO_PLAYER_FOUND "[ERROR]: No player found."
-#define ERR_INVALID_VALUE "[ERROR]: Invalid value."
-
-#define KEY_PRESSED(%0) \
-	(((newkeys & (%0)) == (%0)) && ((oldkeys & (%0)) != (%0)))
-
-#define KEY_RELEASED(%0) \
-	(((newkeys & (%0)) != (%0)) && ((oldkeys & (%0)) == (%0)))
-
-new PlayerText: pRegisterMenu_email[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_age[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_password[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_rePass[MAX_PLAYERS];
-
-new PlayerText: pRegisterMenu_emailSymbol[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_ageSymbol[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_passwordSymbol[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_rePassSymbol[MAX_PLAYERS];
-
-new PlayerText: pRegisterMenu_emailTypebox[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_ageTypebox[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_passwordTypebox[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_rePassTypebox[MAX_PLAYERS];
-
-new PlayerText: pRegisterMenu_buttonRegister[MAX_PLAYERS];
-new PlayerText: pRegisterMenu_buttonCancel[MAX_PLAYERS];
+new MySQL:db;
+new gMySqlRaceCheck[MAX_PLAYERS];
 
 new pRegisterCacheEmail[MAX_PLAYERS][32];
 new pRegisterCacheAge[MAX_PLAYERS];
 new pRegisterCachePassword[MAX_PLAYERS][32];
 new pRegisterCacheRepeatPassword[MAX_PLAYERS][32];
 
-new MySQL:db;
-
-enum _:moneyOperations {
-	add,
-	set
-};
-
-enum _:pData
-{
+enum _:pData {
 	bool: pIsLoggedIn,
 	pLoginAttempts,
 	pLoginTimer,
@@ -130,70 +36,47 @@ enum _:pData
 	pMoney,
 };
 new PlayerData[MAX_PLAYERS][pData];
-new gMySqlRaceCheck[MAX_PLAYERS];
 
-#include <utils>
-#include <datamanip>
-#include <gui>
-#include <admincmds>
-#include <worldmanip>
+#include "../gamemodes/modules/globaldefines.inc"
+
+#include "../gamemodes/modules/utils.inc"
+
+#include "../gamemodes/modules/datamanip.inc"
+
+#include "../gamemodes/modules/gui.inc"
+#include "../gamemodes/modules/admincmds.inc"
+#include "../gamemodes/modules/enex.inc"
+
 
 main() {
-	//new data[][] = {"pBannedBy", "pBanReason"};
-	//new values[2][128]; values[0] = "authorName"; values[1][0] = 0; values[1][1] = 1;
-	//SetPlayerDataArray(0, data, values, "si", {0,2}, sizeof(data));
-
 	return 1;
 }
 
 public OnGameModeInit() {
-	DisableInteriorEnterExits();
-
 	db = mysql_connect("localhost", "root", "", "rpg-forward", MySQLOpt:0);
 
-	if(mysql_errno(db)) {
-		printf("** [MySQL] Couldn't connect to the database (%d).", mysql_errno(db));
-		return 1;
-	}
-
-	printf("MYSQL CONNECTION SUCCESSFUL!");
-
-	InitEnex();
+	if(mysql_errno(db)) { printf(ERR_MYSQL_CONNECT, mysql_errno(db)); return 1; } else { printf(MYSQL_CONNECTED); }
 
 	SetGameModeText("Indev");
 	AddPlayerClass(0, 2495.3547, -1688.2319, 13.6774, 351.1646, WEAPON_M4, 500, WEAPON_KNIFE, 1, WEAPON_COLT45, 100);
+
+	DisableInteriorEnterExits();
+	InitEnex();
+
 	return 1;
 }
 
 public OnPlayerConnect(playerid) {
-	gMySqlRaceCheck[playerid]++;
-
-	static const EMPTY_PLAYER[pData];
-	PlayerData[playerid] = EMPTY_PLAYER;
-
-	GetPlayerName(playerid, PlayerData[playerid][pName], MAX_PLAYER_NAME);
+	REGISTER_LOGIN_OnPlayerConnect(playerid);
 
 	SetPlayerCameraPos(playerid, 1000.0, 1000.0, 50.0);
 	SetPlayerCameraLookAt(playerid, 1000.0, 1005.0, 50.0); 
-
-	new query[256];
-
-	format(query, sizeof(query), "SELECT * FROM users WHERE pName = '%s' LIMIT 1", PlayerData[playerid][pName]);
-	mysql_tquery(db, query, "OnPlayerDataLoaded", "dd", playerid, gMySqlRaceCheck[playerid]);
 
 	return 1;
 }
 
 public OnPlayerDisconnect(playerid, reason) {
-	gMySqlRaceCheck[playerid]++;
-
-	if (cache_is_valid(PlayerData[playerid][pCacheID]))
-	{
-		cache_delete(PlayerData[playerid][pCacheID]);
-		PlayerData[playerid][pCacheID] = MYSQL_INVALID_CACHE;
-	}
-
-	PlayerData[playerid][pIsLoggedIn] = false;
+	REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason);
 
 	return 1;
 }
@@ -207,10 +90,28 @@ public OnPlayerSpawn(playerid) {
 }
 
 public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
+	if (dialogid == DIALOG_INFO) return 1;
+
+	REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, inputtext);
+
+	return 1;
+}
+
+public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
+	REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid);
+
+	return 1;
+}
+
+public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
+	WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+}
+
+// REGISTER LOGIN
+
+forward REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]);
+public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]) {
 	switch (dialogid) {
-
-		case DIALOG_INFO: return 1;
-
 		case DIALOG_LOGIN: 
 		{
 			if (!response) { return Kick(playerid); }
@@ -309,11 +210,11 @@ public OnDialogResponse(playerid, dialogid, response, listitem, inputtext[]) {
 		}
 	}
 
-	return 1;
+    return 1;
 }
 
-public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
-
+forward REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid);
+public REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 	if (playertextid == pRegisterMenu_emailTypebox[playerid])
 	{
 		ShowPlayerDialog(playerid, DIALOG_REGISTER_INPUT_EMAIL, DIALOG_STYLE_INPUT, "E-Mail", "Please input your E-mail address.", "Accept", "Cancel");
@@ -362,9 +263,33 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 		DelayKick(playerid);
 	}
 
-	return 0;
+	return 1;
 }
 
-public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
-	WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+forward REGISTER_LOGIN_OnPlayerConnect(playerid);
+public REGISTER_LOGIN_OnPlayerConnect(playerid) {
+	gMySqlRaceCheck[playerid]++;
+
+	static const EMPTY_PLAYER[pData];
+	PlayerData[playerid] = EMPTY_PLAYER;
+
+	GetPlayerName(playerid, PlayerData[playerid][pName], MAX_PLAYER_NAME);
+
+	new query[256];
+
+	format(query, sizeof(query), "SELECT * FROM users WHERE pName = '%s' LIMIT 1", PlayerData[playerid][pName]);
+	mysql_tquery(db, query, "OnPlayerDataLoaded", "dd", playerid, gMySqlRaceCheck[playerid]);
+}
+
+forward REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason);
+public REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason) {
+	gMySqlRaceCheck[playerid]++;
+
+	if (cache_is_valid(PlayerData[playerid][pCacheID]))
+	{
+		cache_delete(PlayerData[playerid][pCacheID]);
+		PlayerData[playerid][pCacheID] = MYSQL_INVALID_CACHE;
+	}
+
+	PlayerData[playerid][pIsLoggedIn] = false;
 }

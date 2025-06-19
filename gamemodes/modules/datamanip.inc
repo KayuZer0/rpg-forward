@@ -1,3 +1,11 @@
+#define DEFAULT_MONEY 100000
+#define DEFAULT_ADMIN 0
+
+enum _:moneyOperations {
+	add,
+	set
+};
+
 stock SavePlayer(playerid) {
 	new query[1024];
 	new name[MAX_PLAYER_NAME];

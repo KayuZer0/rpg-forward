@@ -353,6 +353,8 @@ new queryCount; // Number of queries to run
 
 CMD:testqps(playerid, params[])
 {
+	CMD_NEEDADMIN(7)
+
 	new howMany;
 
 	if (sscanf(params, "i", howMany)){

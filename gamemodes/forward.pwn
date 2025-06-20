@@ -30,6 +30,7 @@ enum _:pData {
 	pAdmin,
 	pMoney,
 };
+
 new PlayerData[MAX_PLAYERS][pData];
 
 #include "../gamemodes/modules/globaldefines.inc"
@@ -76,6 +77,9 @@ public OnGameModeExit() {
 }
 
 public OnPlayerConnect(playerid) {
+	new tps = GetServerTickRate();
+	SendClientMessage(playerid, COLOR_ORANGE, "Server TPS: %d", tps);
+
 	REGISTER_LOGIN_OnPlayerConnect(playerid);
 
 	SetPlayerCameraPos(playerid, 1000.0, 1000.0, 50.0);

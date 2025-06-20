@@ -346,3 +346,49 @@ CMD:testget(playerid, params[]){
 	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pAdmin]);
 	return 1;
 }
+
+new startTick;
+new responses;
+new queryCount; // Number of queries to run
+
+CMD:testqps(playerid, params[])
+{
+	new howMany;
+
+	if (sscanf(params, "i", howMany)){
+		CMD_USAGE("/testqps <how many queries>")
+	}
+
+	queryCount = howMany;
+
+    startTick = GetTickCount();
+
+    for (new i = 0; i < queryCount; i++)
+    {
+		new query[1024];
+		format(query, sizeof(query), "UPDATE users SET `pName` = 'Niggu', `pEmail` = 'test@test.com', `pPassword` = '0C4835C225FF0C266AC558DD56A209BF76F0A2A9CDDF587FCB67A68BF50A18D3', `pSalt` = 'Wsf3cEZC;>p}BVUw', `pAge` = '0', `pMoney` = '0', `pAdmin` = 0, `pBannedUntil` = 0, `pBannedBy` = 'Nobody', `pBanReason` = 'Prost' WHERE `pName` = 'Niggu'");
+        mysql_tquery(db, query, "OnTestQpsQueryFinished", "i", playerid);
+    }
+
+    return 1;
+}
+
+forward OnTestQpsQueryFinished(playerid);
+public OnTestQpsQueryFinished(playerid) {
+	if (mysql_errno(db)) {
+		SendClientMessage(playerid, COLOR_ORANGE, "[QPS Test]: MySQL Error: %d", mysql_errno(db));
+		return 1;
+	}
+
+	responses++;
+
+	if (responses >= queryCount) {
+		new totalTime = GetTickCount() - startTick;
+		SendClientMessage(playerid, COLOR_ORANGE, "[QPS Test]: %d queries executed in %d ms.", queryCount, totalTime);
+		SendClientMessage(playerid, COLOR_ORANGE, "[QPS Test]: Approx %0.2f queries per second.", (queryCount * 1000.0) / float(totalTime));
+		responses = 0;
+		queryCount = 0;
+	}
+
+	return 1;
+}

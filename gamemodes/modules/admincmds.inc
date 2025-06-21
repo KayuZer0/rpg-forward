@@ -314,22 +314,19 @@ CMD:a(playerid, params[]) {
 	return 1;
 }
 
-CMD:enex(playerid, params[]) {
-	new enexid, objid;
+CMD:pickup(playerid, params[]) {
+	new pickupid;
 
 	CMD_NEEDADMIN(7)
 
-	new Float: pPos[3];
-	GetPlayerPos(playerid, pPos[0], pPos[1], pPos[2]);
+	new Float: x, Float: y, Float: z;
+	GetPlayerPos(playerid, x, y, z);
 
-	if (sscanf(params, "ii", enexid, objid)){
-		CMD_USAGE("/enex <enex id> <object id>")
+	if (sscanf(params, "i", pickupid)){
+		CMD_USAGE("/pickup <pickupid>")
 	}
 
-	if (enexid > MAX_ENEX) {
-		SendClientMessage(playerid, COLOR_ORANGE, "Enex ID too high.");
-		return 1;
-	}
+	CreateDynamicPickup(pickupid, 1, Float:x, Float:y, Float:z);
 
 	//CreateEnex(objid, 15, "Test", "Test",  Float: pPos, Float: {207.630004, -110.579940, 1005.132812});
 	SendClientMessage(playerid, COLOR_ORANGE, "Enex created.");
@@ -349,7 +346,9 @@ CMD:testset(playerid, params[]) {
 }
 
 CMD:testget(playerid, params[]){
-	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pAdmin]);
+	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pInHouseID]);
+	SendClientMessage(playerid, COLOR_ORANGE, "%s", PlayerData[playerid][pName]);
+	SendClientMessage(playerid, COLOR_ORANGE, "%s", HouseData[PlayerData[playerid][pInHouseID]][hOwner]);
 	return 1;
 }
 

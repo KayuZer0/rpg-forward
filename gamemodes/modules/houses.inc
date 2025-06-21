@@ -1,3 +1,54 @@
+stock SaveHouse(houseid) {
+    new query[1024];
+
+    mysql_format(db, query, sizeof(query),
+    "UPDATE `houses` SET \
+    `hName` = '%s', \
+    `hDesc` = '%s', \
+    `hOwner` = '%s', \
+    `hExtX` = '%f', \
+    `hExtY` = '%f', \
+    `hExtZ` = '%f', \
+    `hIntX` = '%f', \
+    `hIntY` = '%f', \
+    `hIntZ` = '%f', \
+    `hInterior` = '%d', \
+    `hPickupID` = '%d'",
+    
+    HouseData[houseid][hName],
+    HouseData[houseid][hDesc],
+    HouseData[houseid][hOwner],
+    HouseData[houseid][hExtX],
+    HouseData[houseid][hExtY],
+    HouseData[houseid][hExtZ],
+    HouseData[houseid][hIntX],
+    HouseData[houseid][hIntY],
+    HouseData[houseid][hIntZ],
+    HouseData[houseid][hInterior],
+    HouseData[houseid][hPickupID]);
+
+    new where[32];
+    mysql_format(db, where, sizeof(where), " WHERE `hID` = '%d'", houseid);
+    strcat(query, where, sizeof(query));
+
+    mysql_tquery(db, query, "OnHouseSaved", "i", houseid);
+}
+
+//[POS]: X: 2210.995361 | Y: 1285.725463 | Z: 10.820312 | ROT: 179.601882
+
+forward OnHouseSaved(houseid);
+public OnHouseSaved(houseid) {
+	if (!mysql_errno(db))
+    {
+        printf("Data inserted successfuly!");
+    }
+    else
+    {
+        printf("Error [%d] when inserting data!", mysql_errno(db));
+    }
+    return 1;
+}
+
 stock LoadHouses() {
     new query[128];
     mysql_format(db, query, sizeof(query), "SELECT * FROM `houses`");
@@ -7,6 +58,7 @@ stock LoadHouses() {
 forward OnHouseDataLoaded();
 public OnHouseDataLoaded() {
 	new rowCount;
+    printf("ROW COUNT: %d", rowCount);
 	cache_get_row_count(rowCount);
     if (rowCount > 0) {
         for (new i = 0; i < rowCount; i++) {
@@ -22,20 +74,20 @@ public OnHouseDataLoaded() {
             cache_get_value_int(i, "hInterior", HouseData[i][hInterior]);
             cache_get_value_int(i, "hPickupID", HouseData[i][hPickupID]);
 
-            new extobj = CreateDynamicPickup(HouseData[i][hPickupID], 1, Float:HouseData[i][hExtX], Float:HouseData[i][hExtY], Float:HouseData[i][hExtZ], -1, -1, -1);
-            new intobj = CreateDynamicPickup(HouseData[i][hPickupID], 1, Float:HouseData[i][hIntX], Float:HouseData[i][hIntY], Float:HouseData[i][hIntZ], -1, HouseData[i][hInterior], -1);
+            HouseData[i][hExtPickupObj] = CreateDynamicPickup(HouseData[i][hPickupID], 1, Float:HouseData[i][hExtX], Float:HouseData[i][hExtY], Float:HouseData[i][hExtZ], -1, -1, -1);
+            HouseData[i][hIntPickupObj] = CreateDynamicPickup(HouseData[i][hPickupID], 1, Float:HouseData[i][hIntX], Float:HouseData[i][hIntY], Float:HouseData[i][hIntZ], i, HouseData[i][hInterior], -1);
 
             new label[128];
             format(label, sizeof(label), "%s\nOwner: %s\n%s", HouseData[i][hName], HouseData[i][hOwner], HouseData[i][hDesc]);
 
-            CreateDynamic3DTextLabel(label, COLOR_ORANGE, Float:HouseData[i][hExtX], Float:HouseData[i][hExtY], Float:HouseData[i][hExtZ], Float:10.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 0, -1, -1, -1);
-            CreateDynamic3DTextLabel(label, COLOR_ORANGE, Float:HouseData[i][hIntX], Float:HouseData[i][hIntY], Float:HouseData[i][hIntZ], Float:10.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 0, -1, HouseData[i][hInterior], -1);
+            HouseData[i][hExtLabelObj] = CreateDynamic3DTextLabel(label, COLOR_ORANGE, Float:HouseData[i][hExtX], Float:HouseData[i][hExtY], Float:HouseData[i][hExtZ], Float:10.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 0, -1, -1, -1);
+            HouseData[i][hIntLabelObj] = CreateDynamic3DTextLabel(label, COLOR_ORANGE, Float:HouseData[i][hIntX], Float:HouseData[i][hIntY], Float:HouseData[i][hIntZ], Float:10.0, INVALID_PLAYER_ID, INVALID_VEHICLE_ID, 0, i, HouseData[i][hInterior], -1);
 
-			PickupData[intobj][pkType] = PICKUP_TYPE_HOUSE;
-			PickupData[intobj][pkHID] = i;
+			PickupData[HouseData[i][hIntPickupObj]][pkType] = PICKUP_TYPE_HOUSE;
+			PickupData[HouseData[i][hIntPickupObj]][pkHID] = i;
 
-			PickupData[extobj][pkType] = PICKUP_TYPE_HOUSE;
-			PickupData[extobj][pkHID] = i;
+			PickupData[HouseData[i][hExtPickupObj]][pkType] = PICKUP_TYPE_HOUSE;
+			PickupData[HouseData[i][hExtPickupObj]][pkHID] = i;
         }
     }
 }

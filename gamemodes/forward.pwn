@@ -50,7 +50,11 @@ enum _:hData {
 	Float: hIntY,
 	Float: hIntZ,
 	hInterior,
-	hPickupID
+	hPickupID,
+	hExtPickupObj,
+	hIntPickupObj,
+	Text3D: hExtLabelObj,
+	Text3D: hIntLabelObj
 };
 new HouseData[100][hData];
 
@@ -70,6 +74,7 @@ new Iterator:AdminsOnline<MAX_PLAYERS>;
 #include "../gamemodes/modules/register-login.inc"
 #include "../gamemodes/modules/admincmds.inc"
 #include "../gamemodes/modules/houses.inc"
+#include "../gamemodes/modules/playercommands.inc"
 
 
 main() {
@@ -149,6 +154,7 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 
 public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
 	if KEY_PRESSED(KEY_SECONDARY_ATTACK) {
+		if (PlayerData[playerid][pCurrentPickup] == -1) {return 1;}
 		new currentPickup = PlayerData[playerid][pCurrentPickup];
 		switch (PickupData[currentPickup][pkType]) {
 			case PICKUP_TYPE_HOUSE: {
@@ -187,8 +193,7 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid){
 stock SavePlayer(playerid) {
 	new query[1024];
 	new name[MAX_PLAYER_NAME];
-
-	GetPlayerName(playerid, name, sizeof(name));
+	name = PlayerData[playerid][pName];
 
 	mysql_format(db, query, sizeof(query),
 	"UPDATE users SET \

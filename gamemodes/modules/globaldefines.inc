@@ -48,11 +48,6 @@
 #define COLOR_TUTORIAL      0x2CBD7AFF
 #define COLOR_NICEGREEN     0x8DDE00FF
 
-// PLAYER DEFAULT VALUES:
-
-#define DEFAULT_MONEY 100000
-#define DEFAULT_ADMIN 0
-
 // DIALOGS:
 
 #define DIALOG_INFO 0
@@ -80,15 +75,9 @@
 #define PICKUP_TYPE_HOUSE 1
 #define PICKUP_TYPE_JOB 2
 
-// ENEX:
-
-#define MAX_ENEX 10
-
-#define ENEX_MAX_NAME 24
-#define ENEX_MAX_DESC 48
-
-#define ENEX_SPAWN_INT 0
-
+#define MAX_JOBS 8
+#define MAX_HOUSES 100
+#define MAX_BUSINESSES 100
 
 // FUNCTIONS
 

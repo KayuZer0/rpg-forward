@@ -14,6 +14,11 @@ new pRegisterCacheRepeatPassword[MAX_PLAYERS][32];
 #define MINIMUM_PASSWORD 8
 #define MAXIMUM_PASSWORD 32
 
+// PLAYER DEFAULT VALUES:
+
+#define DEFAULT_MONEY 10000
+#define DEFAULT_ADMIN 0
+
 forward REGISTER_LOGIN_OnPlayerConnect(playerid);
 public REGISTER_LOGIN_OnPlayerConnect(playerid) {
 	gMySqlRaceCheck[playerid]++;
@@ -115,7 +120,7 @@ public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, c
 
 				PlayerData[playerid][pIsLoggedIn] = true;
 
-				SetSpawnInfo(playerid, NO_TEAM, 0, 1958.33, 1343.12, 15.36, 269.15, WEAPON_SAWEDOFF, 36, WEAPON_UZI, 150, WEAPON_FIST, 0);
+				SetSpawnInfo(playerid, NO_TEAM, 0, 2211.411621, 1237.904663, 10.820312, 269.15, WEAPON_SAWEDOFF, 36, WEAPON_UZI, 150, WEAPON_FIST, 0);
 				SpawnPlayer(playerid);
 
 				return 1;
@@ -288,6 +293,8 @@ public OnPlayerRegistered(playerid) {
 	PlayerData[playerid][pAdmin] = DEFAULT_ADMIN;
 	PlayerData[playerid][pEmail] = pRegisterCacheEmail[playerid];
 	PlayerData[playerid][pAge] = pRegisterCacheAge[playerid];
+	PlayerData[playerid][pBannedUntil] = -1;
+	PlayerData[playerid][pJob] = -1;
 
 	format(pRegisterCacheEmail[playerid], sizeof(pRegisterCacheEmail[]), "");
 	pRegisterCacheAge[playerid] = 0;
@@ -298,7 +305,8 @@ public OnPlayerRegistered(playerid) {
 
 	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
 
-	SetSpawnInfo(playerid, NO_TEAM, 0, 1958.33, 1343.12, 15.36, 269.15, WEAPON_SAWEDOFF, 36, WEAPON_UZI, 150, WEAPON_FIST, 0);
+	//[POS]: X: 2211.411621 | Y: 1237.904663 | Z: 10.820312 | ROT: 181.238906
+	SetSpawnInfo(playerid, NO_TEAM, 0, 2211.411621, 1237.904663, 10.820312, 269.15, WEAPON_SAWEDOFF, 36, WEAPON_UZI, 150, WEAPON_FIST, 0);
 	SpawnPlayer(playerid);
 	
 	return 1;
@@ -309,6 +317,7 @@ stock AssignInitialPlayerData(playerid) {
 	cache_get_value_int(0, "pAdmin", PlayerData[playerid][pAdmin]);
 	cache_get_value(0, "pEmail", PlayerData[playerid][pEmail], 32);
 	cache_get_value_int(0, "pAge", PlayerData[playerid][pAge]);
+	cache_get_value_int(0, "pJob", PlayerData[playerid][pJob]);
 
 	Iter_Add(AdminsOnline, playerid);
 

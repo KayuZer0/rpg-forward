@@ -1,3 +1,6 @@
+
+#define PP_SYNTAX_THREADED
+
 #include <open.mp>
 #include <string>
 #include <PawnPlus>
@@ -15,14 +18,17 @@ new MySQL:db;
 new gMySqlRaceCheck[MAX_PLAYERS];
 
 enum _:pData {
+	// Temp:
 	pCurrentPickup,
 	pInHouseID,
 	pInBusinessID,
 
+	// Login:
 	bool: pIsLoggedIn,
 	pLoginAttempts,
 	pLoginTimer,
 
+	// Account info:
 	pName[MAX_PLAYER_NAME],
 	pEmail[32],
 	pAge,
@@ -30,13 +36,16 @@ enum _:pData {
 	pSalt[17],
 	Cache: pCacheID,
 
+	// Ban info:
 	pBannedUntil,
 	pBannedBy[MAX_PLAYER_NAME],
 	pBanReason[128],
 
+	// Stats:
 	pAdmin,
 	pMoney,
-};
+	pJob
+}
 new PlayerData[MAX_PLAYERS][pData];
 
 enum _:hData {
@@ -55,8 +64,8 @@ enum _:hData {
 	hIntPickupObj,
 	Text3D: hExtLabelObj,
 	Text3D: hIntLabelObj
-};
-new HouseData[100][hData];
+}
+new HouseData[MAX_HOUSES][hData];
 
 enum __:pkData {
 	pkType,
@@ -64,6 +73,18 @@ enum __:pkData {
 	pkJBID
 }
 new PickupData[MAX_PICKUPS][pkData];
+
+enum __:jbData {
+	jbName[16],
+	jbOwner[MAX_PLAYER_NAME],
+	Float: jbMarkerX,
+	Float: jbMarkerY,
+	Float: jbMarkerZ,
+	jbPickupID,
+	jbPickupObj,
+	Text3D: jbLabelObj
+}
+new JobData[MAX_JOBS][jbData];
 
 new Iterator:AdminsOnline<MAX_PLAYERS>;
 
@@ -74,8 +95,8 @@ new Iterator:AdminsOnline<MAX_PLAYERS>;
 #include "../gamemodes/modules/register-login.inc"
 #include "../gamemodes/modules/admincmds.inc"
 #include "../gamemodes/modules/houses.inc"
+#include "../gamemodes/modules/jobs.inc"
 #include "../gamemodes/modules/playercommands.inc"
-
 
 main() {
 	mysql_log(ALL);
@@ -92,6 +113,7 @@ public OnGameModeInit() {
 
 	DisableInteriorEnterExits();
 	LoadHouses();
+	LoadJobs();
 
 	return 1;
 }
@@ -153,33 +175,8 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 }
 
 public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
-	if KEY_PRESSED(KEY_SECONDARY_ATTACK) {
-		if (PlayerData[playerid][pCurrentPickup] == -1) {return 1;}
-		new currentPickup = PlayerData[playerid][pCurrentPickup];
-		switch (PickupData[currentPickup][pkType]) {
-			case PICKUP_TYPE_HOUSE: {
-				new hID = PickupData[currentPickup][pkHID];
-				if (GetPlayerInterior(playerid) == 0) {
-					new Float: dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hExtX], Float:HouseData[hID][hExtY], Float:HouseData[hID][hExtZ]);
-					if (dist < 1.0) {
-						PlayerData[playerid][pInHouseID] = hID;
-						SetPlayerInterior(playerid, HouseData[hID][hInterior]);
-						SetPlayerVirtualWorld(playerid, hID);
-						SetPlayerPos(playerid, Float: HouseData[hID][hIntX], Float: HouseData[hID][hIntY], Float: HouseData[hID][hIntZ]);
-					}
-
-				} else {
-					new Float: dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hIntX], Float:HouseData[hID][hIntY], Float:HouseData[hID][hIntZ]);
-					if (dist < 1.0) {
-						PlayerData[playerid][pInHouseID] = -1;
-						SetPlayerInterior(playerid, 0);
-						SetPlayerVirtualWorld(playerid, 0);
-						SetPlayerPos(playerid, Float: HouseData[hID][hExtX], Float: HouseData[hID][hExtY], Float: HouseData[hID][hExtZ]);
-					}
-				}
-			}
-		}
-	}
+	HOUSES_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+	JOBS_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
 
 	return 1;
 }
@@ -190,10 +187,10 @@ public OnPlayerPickUpDynamicPickup(playerid, pickupid){
 	return 1;
 }
 
+// Data save functions
+
 stock SavePlayer(playerid) {
 	new query[1024];
-	new name[MAX_PLAYER_NAME];
-	name = PlayerData[playerid][pName];
 
 	mysql_format(db, query, sizeof(query),
 	"UPDATE users SET \
@@ -209,31 +206,113 @@ stock SavePlayer(playerid) {
 	PlayerData[playerid][pPassword],
 	PlayerData[playerid][pSalt]);
 
-
-	new tmp[256];
-	mysql_format(db, tmp, sizeof(tmp),
-	"`pMoney` = '%d', \
+	mysql_format(db, query, sizeof(query),
+	"%s `pMoney` = '%d', \
 	`pAdmin` = '%d', \
 	`pBannedUntil` = '%e', \
 	`pBannedBy` = '%e', \
-	`pBanReason` = '%e'",
+	`pBanReason` = '%e', \
+	`pJob` = '%d'",
 	
+	query,
 	PlayerData[playerid][pMoney],
 	PlayerData[playerid][pAdmin],
 	PlayerData[playerid][pBannedUntil],
 	PlayerData[playerid][pBannedBy],
-	PlayerData[playerid][pBanReason]);
-	strcat(query, tmp, sizeof(query));
+	PlayerData[playerid][pBanReason],
+	PlayerData[playerid][pJob]);
 
-	new where[32];
-	mysql_format(db, where, sizeof(where), " WHERE `pName` = '%e'", name);
-	strcat(query, where, sizeof(query));
+	mysql_format(db, query, sizeof(query), "%s WHERE `pName` = '%e'", query, PlayerData[playerid][pName]);
 
 	mysql_tquery(db, query, "OnPlayerSaved", "i", playerid);
 }
 
 forward OnPlayerSaved(playerid);
 public OnPlayerSaved(playerid) {
+	if (!mysql_errno(db))
+    {
+        printf("Data inserted successfuly!");
+    }
+    else
+    {
+        printf("Error [%d] when inserting data!", mysql_errno(db));
+    }
+    return 1;
+}
+
+stock SaveHouse(houseid) {
+    new query[1024];
+
+    mysql_format(db, query, sizeof(query),
+    "UPDATE `houses` SET \
+    `hName` = '%s', \
+    `hDesc` = '%s', \
+    `hOwner` = '%s', \
+    `hExtX` = '%f', \
+    `hExtY` = '%f', \
+    `hExtZ` = '%f', \
+    `hIntX` = '%f', \
+    `hIntY` = '%f', \
+    `hIntZ` = '%f', \
+    `hInterior` = '%d', \
+    `hPickupID` = '%d'",
+    
+    HouseData[houseid][hName],
+    HouseData[houseid][hDesc],
+    HouseData[houseid][hOwner],
+    HouseData[houseid][hExtX],
+    HouseData[houseid][hExtY],
+    HouseData[houseid][hExtZ],
+    HouseData[houseid][hIntX],
+    HouseData[houseid][hIntY],
+    HouseData[houseid][hIntZ],
+    HouseData[houseid][hInterior],
+    HouseData[houseid][hPickupID]);
+
+    mysql_format(db, query, sizeof(query), "%s WHERE `hID` = '%d'", query, houseid);
+
+    mysql_tquery(db, query, "OnHouseSaved", "i", houseid);
+}
+
+forward OnHouseSaved(houseid);
+public OnHouseSaved(houseid) {
+	if (!mysql_errno(db))
+    {
+        printf("Data inserted successfuly!");
+    }
+    else
+    {
+        printf("Error [%d] when inserting data!", mysql_errno(db));
+    }
+    return 1;
+}
+
+stock SaveJob(jobid) {
+    new query[1024];
+
+    mysql_format(db, query, sizeof(query),
+    "UPDATE `jobs` SET \
+    `jbName` = '%e', \
+    `jbOwner` = '%e', \
+    `jbMarkerX` = '%d', \
+    `jbMarkerY` = '%d', \
+    `jbMarkerZ` = '%d', \
+    `jbPickupID` = '%d'" \
+    
+    JobData[jobid][jbName],
+	JobData[jobid][jbOwner],
+	JobData[jobid][jbMarkerX],
+	JobData[jobid][jbMarkerY],
+	JobData[jobid][jbMarkerZ],
+	JobData[jobid][jbPickupID],);
+
+    mysql_format(db, query, sizeof(query), "%s WHERE `jbID` = '%d'", query, jobid);
+
+    mysql_tquery(db, query, "OnHouseSaved", "i", jobid);
+}
+
+forward OnJobSaved(jobid);
+public OnJobSaved(jobid) {
 	if (!mysql_errno(db))
     {
         printf("Data inserted successfuly!");

@@ -6,10 +6,6 @@
 
 #define CMD_MUST_BE_CONNECTED(%0) if (!IsPlayerConnected(%0)) { SendClientMessage(playerid, COLOR_DARKNICERED, ERR_NO_PLAYER_FOUND); return 1; }
 
-#define CMD_AUTHOR_NAME new authorName[MAX_PLAYER_NAME]; GetPlayerName(playerid, authorName, sizeof(authorName))
-
-#define CMD_TARGET_NAME new targetName[MAX_PLAYER_NAME]; GetPlayerName(targetid, targetName, sizeof(targetName))
-
 #define CMD_MUST_BE_LOGGED_IN if (PlayerData[playerid][pIsLoggedIn] != true) return 1
 
 #define MAX_ADMIN_LEVEL 7
@@ -31,9 +27,6 @@ CMD:ban(playerid, params[]) {
 		CMD_USAGE("/ban <id> <days (0 = permanent)> <reason>")
 	}
 
-	CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
 	CMD_MUST_BE_CONNECTED(targetid)
 
 	if (duration < 0) {
@@ -42,16 +35,16 @@ CMD:ban(playerid, params[]) {
 	}
 
 	if (duration == 0) {
-		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s. Reason: %s", targetName, authorName, reason);
+		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s. Reason: %s", PlayerData[targetid][pName], PlayerData[playerid][pName], reason);
 		PlayerData[targetid][pBannedUntil] = 0;
 	} else {
 		new bannedUntil = gettime() + (duration * 86400);
 
 		PlayerData[targetid][pBannedUntil] = bannedUntil;
-		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s for %d days. Reason: %s", targetName, authorName, duration, reason);
+		SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was banned by Admin %s for %d days. Reason: %s", PlayerData[targetid][pName], PlayerData[playerid][pName], duration, reason);
 	}
 
-	PlayerData[targetid][pBannedBy] = authorName;
+	PlayerData[targetid][pBannedBy] = PlayerData[playerid][pName];
 	PlayerData[targetid][pBanReason] = reason;
 
 	SavePlayer(targetid);
@@ -64,9 +57,6 @@ CMD:ban(playerid, params[]) {
 CMD:kick(playerid, params[]) {
 	new targetid, reason[128];
 
-	CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
 	CMD_NEEDADMIN(1)
 
 	if (sscanf(params, "is[128]", targetid, reason)){
@@ -75,7 +65,7 @@ CMD:kick(playerid, params[]) {
 
     CMD_MUST_BE_CONNECTED(targetid)
 
-	SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was kicked by Admin %s. Reason: %s", targetName, authorName, reason);
+	SendClientMessageToAll(COLOR_DARKNICERED, "Player %s was kicked by Admin %s. Reason: %s", PlayerData[targetid][pName], PlayerData[playerid][pName], reason);
 	Kick(targetid);
 
 	return 1;
@@ -90,17 +80,14 @@ CMD:slap(playerid, params[]) {
         CMD_USAGE("/slap <id>")
 	}
 
-    CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
     CMD_MUST_BE_CONNECTED(targetid)
 
     new Float: x, Float: y, Float: z;
     GetPlayerPos(targetid, x, y, z);
     SetPlayerPos(targetid, x, y, z + 1.5);
 
-    SendClientMessage(playerid, 0xFFA500AA, "You slapped %s.", targetName);
-	SendClientMessage(targetid, 0xFFA500AA, "Admin %s slapped you.", authorName);
+    SendClientMessage(playerid, 0xFFA500AA, "You slapped %s.", PlayerData[targetid][pName]);
+	SendClientMessage(targetid, 0xFFA500AA, "Admin %s slapped you.", PlayerData[playerid][pName]);
 
     return 1;
 }
@@ -113,9 +100,6 @@ CMD:setadmin(playerid, params[]) {
 	if (sscanf(params, "ii", targetid, level)){
         CMD_USAGE("/setadmin <id> <level>")
 	}
-    
-	CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
 
 	CMD_NOT_ON_SELF
 
@@ -139,8 +123,8 @@ CMD:setadmin(playerid, params[]) {
 		}
 	}
 
-	SendClientMessage(playerid, 0xFFA500AA, "You set %s's Admin Level to %d.", targetName, level);
-	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your Admin Level to %d.", authorName, level);
+	SendClientMessage(playerid, 0xFFA500AA, "You set %s's Admin Level to %d.", PlayerData[targetid][pName], level);
+	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your Admin Level to %d.", PlayerData[playerid][pName], level);
 
 	return 1;
 
@@ -155,17 +139,14 @@ CMD:setmoney(playerid, params[]) {
 		CMD_USAGE("/setmoney <id> <amount>")
 	}
 
-	CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
 	CMD_MUST_BE_CONNECTED(targetid)
 
 	if (money > 999999999 || money < 0) {SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE); return 1;}
 
 	ChangePlayerMoney(targetid, money, set);
 
-	SendClientMessage(playerid, 0xFFA500AA, "You set %s's money to $%d.", targetName, money);
-	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your money to $%d.", authorName, money);
+	SendClientMessage(playerid, COLOR_ORANGE, "You set %s's money to $%d.", PlayerData[targetid][pName], money);
+	SendClientMessage(targetid, COLOR_ORANGE, "Admin %s set your money to $%d.", PlayerData[playerid][pName], money);
 
 	return 1;
 }
@@ -179,9 +160,6 @@ CMD:givemoney(playerid, params[]) {
 		CMD_USAGE("/givemoney <id> <amount>")
 	}
 
-    CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
 	CMD_MUST_BE_CONNECTED(targetid)
 
 	if (money > 999999999 || (PlayerData[targetid][pMoney] <= 0 && money < 0) || money == 0) {SendClientMessage(playerid, 0xFF4444AA, ERR_INVALID_VALUE); return 1;}
@@ -189,11 +167,11 @@ CMD:givemoney(playerid, params[]) {
 	ChangePlayerMoney(playerid, money, add);
 
 	if (money < 0) {
-		SendClientMessage(playerid, 0xFFA500AA, "You took $%d from player %s.", abs(money), targetName);
-		SendClientMessage(targetid, 0xFFA500AA, "Admin %s took $%d from you.", authorName, abs(money));
+		SendClientMessage(playerid, 0xFFA500AA, "You took $%d from player %s.", abs(money), PlayerData[targetid][pName]);
+		SendClientMessage(targetid, 0xFFA500AA, "Admin %s took $%d from you.", PlayerData[playerid][pName], abs(money));
 	} else {
-		SendClientMessage(playerid, 0xFFA500AA, "You gave $%d to player %s.", money, targetName);
-		SendClientMessage(targetid, 0xFFA500AA, "Admin %s gave you $%d.", authorName, money);
+		SendClientMessage(playerid, 0xFFA500AA, "You gave $%d to player %s.", money, PlayerData[targetid][pName]);
+		SendClientMessage(targetid, 0xFFA500AA, "Admin %s gave you $%d.", PlayerData[playerid][pName], money);
 	}
 
 
@@ -210,7 +188,7 @@ CMD:clearchat(playerid, params[]) {
 		SendClientMessageToAll(COLOR_WHITE, "");
 	}
 
-	SendClientMessageToAll(0xFFA500AA, "Admin %s cleared the chat.", authorName);
+	SendClientMessageToAll(0xFFA500AA, "Admin %s cleared the chat.", PlayerData[playerid][pName]);
 
 	return 1;
 }
@@ -230,9 +208,40 @@ CMD:spawncar(playerid, params[]) {
 
 	new spawnedCar = CreateVehicle(vehicleid, x, y, z, a, color1, color2, -1, false);
 
+	SetVehicleVirtualWorld(spawnedCar, GetPlayerVirtualWorld(playerid));
+
 	PutPlayerInVehicle(playerid, spawnedCar, 0);
 
 	SendClientMessage(playerid, 0xFFA500AA, "Ti-am spawnat bolidu' cumetre. Cu placere se spune.");
+
+	return 1;
+}
+
+CMD:vre(playerid, args[]) {
+	CMD_NEEDADMIN(1)
+
+	if (IsPlayerInAnyVehicle(playerid)) {
+		DestroyVehicle(GetPlayerVehicleID(playerid));
+		SendClientMessage(playerid, COLOR_ORANGE, "Car deleted.");
+	} else {
+		SendClientMessage(playerid, COLOR_DARKNICERED, "You are not in a car.");
+	}
+
+	return 1;
+}
+
+CMD:gotojob(playerid, params[]) {
+	new targetjob;
+
+	CMD_NEEDADMIN(1)
+
+	if (sscanf(params, "i", targetjob)){
+		CMD_USAGE("/gotojob <jon id>")
+	}
+
+	SetPlayerPos(playerid, Float:JobData[targetjob][jbMarkerX], Float:JobData[targetjob][jbMarkerY], Float:JobData[targetjob][jbMarkerZ]);
+
+	SendClientMessage(playerid, COLOR_ORANGE, "You teleported to Job ID %d.", targetjob);
 
 	return 1;
 }
@@ -246,9 +255,6 @@ CMD:goto(playerid, params[]){
 		CMD_USAGE("/goto <id>")
 	}
 
-    CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
     CMD_MUST_BE_CONNECTED(targetid)
     
     new Float: x, Float: y, Float: z;
@@ -260,8 +266,8 @@ CMD:goto(playerid, params[]){
     SetPlayerPos(playerid, x, y + 0.25, z);
 
 
-    SendClientMessage(playerid, COLOR_ORANGE, "You teleported to %s.", targetName);
-    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported to you.", authorName);
+    SendClientMessage(playerid, COLOR_ORANGE, "You teleported to %s.", PlayerData[targetid][pName]);
+    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported to you.", PlayerData[playerid][pName]);
 
     return 1;
 }
@@ -275,9 +281,6 @@ CMD:gethere(playerid, params[]){
 		CMD_USAGE("/gethere <id>")
 	}
 
-    CMD_AUTHOR_NAME;
-    CMD_TARGET_NAME;
-
     CMD_MUST_BE_CONNECTED(targetid)
     
     new Float: x, Float: y, Float: z;
@@ -288,8 +291,8 @@ CMD:gethere(playerid, params[]){
 	SetPlayerInterior(targetid, GetPlayerInterior(playerid));
     SetPlayerPos(targetid, x, y + 0.25, z);
 
-    SendClientMessage(playerid, COLOR_ORANGE, "You teleported %s to you.", targetName);
-    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported you to them.", authorName);
+    SendClientMessage(playerid, COLOR_ORANGE, "You teleported %s to you.", PlayerData[targetid][pName]);
+    SendClientMessage(targetid, COLOR_ORANGE, "Admin %s teleported you to them.", PlayerData[playerid][pName]);
 
     return 1;
 }
@@ -303,12 +306,10 @@ CMD:a(playerid, params[]) {
 		CMD_USAGE("/a <message>")
 	}
 
-	CMD_AUTHOR_NAME;
-
     if (strlen(message) < 0) {CMD_USAGE("/a <message>")}
 
 	foreach (new i : AdminsOnline) {
-		SendClientMessage(i, COLOR_DARKNICERED, "(/a) Admin %s: {FF5733}%s", authorName, message);
+		SendClientMessage(i, COLOR_DARKNICERED, "(/a) Admin %s: {FF5733}%s", PlayerData[playerid][pName], message);
 	}
 
 	return 1;
@@ -346,9 +347,8 @@ CMD:testset(playerid, params[]) {
 }
 
 CMD:testget(playerid, params[]){
-	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pInHouseID]);
-	SendClientMessage(playerid, COLOR_ORANGE, "%s", PlayerData[playerid][pName]);
-	SendClientMessage(playerid, COLOR_ORANGE, "%s", HouseData[PlayerData[playerid][pInHouseID]][hOwner]);
+	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pJob]);
+	SendClientMessage(playerid, COLOR_ORANGE, "%d", PlayerData[playerid][pCurrentPickup]);
 	return 1;
 }
 
@@ -382,6 +382,11 @@ CMD:testqps(playerid, params[])
 
 CMD:testforloop(playerid, params[]) {
 	CMD_NEEDADMIN(7)
+	new Iterator:ConnectedPlayers<MAX_PLAYERS>;
+	Iter_Add(ConnectedPlayers, playerid);
+
+	new Connected[MAX_PLAYERS];
+	Connected[playerid] = true;
 
 	new howMany;
 
@@ -393,7 +398,12 @@ CMD:testforloop(playerid, params[]) {
 	new startTime = GetTickCount();
 	for (new i = 0; i < howMany; i++) {
 		if (playerid == 0) {
-			printf("0!");
+			new xyz = 0;
+			//new isCon = IsPlayerConnected(playerid);
+			//new isCon = Iter_Contains(ConnectedPlayers, playerid);
+			//new isCon = Connected[playerid];
+			//SavePlayer(playerid);
+			//NewSavePlayer(playerid);
 		}
 		loopsDone ++;
 	}

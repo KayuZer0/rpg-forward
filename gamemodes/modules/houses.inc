@@ -1,51 +1,33 @@
-stock SaveHouse(houseid) {
-    new query[1024];
+#define HOUSE_ENEX_DISTANCE_THRESHOLD 1.0
 
-    mysql_format(db, query, sizeof(query),
-    "UPDATE `houses` SET \
-    `hName` = '%s', \
-    `hDesc` = '%s', \
-    `hOwner` = '%s', \
-    `hExtX` = '%f', \
-    `hExtY` = '%f', \
-    `hExtZ` = '%f', \
-    `hIntX` = '%f', \
-    `hIntY` = '%f', \
-    `hIntZ` = '%f', \
-    `hInterior` = '%d', \
-    `hPickupID` = '%d'",
-    
-    HouseData[houseid][hName],
-    HouseData[houseid][hDesc],
-    HouseData[houseid][hOwner],
-    HouseData[houseid][hExtX],
-    HouseData[houseid][hExtY],
-    HouseData[houseid][hExtZ],
-    HouseData[houseid][hIntX],
-    HouseData[houseid][hIntY],
-    HouseData[houseid][hIntZ],
-    HouseData[houseid][hInterior],
-    HouseData[houseid][hPickupID]);
+forward HOUSES_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+public HOUSES_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
+	if KEY_PRESSED(KEY_SECONDARY_ATTACK) {
+		if (PlayerData[playerid][pCurrentPickup] == -1) {return 1;}
 
-    new where[32];
-    mysql_format(db, where, sizeof(where), " WHERE `hID` = '%d'", houseid);
-    strcat(query, where, sizeof(query));
+		new currentPickup = PlayerData[playerid][pCurrentPickup];
 
-    mysql_tquery(db, query, "OnHouseSaved", "i", houseid);
-}
+		switch (PickupData[currentPickup][pkType]) {
 
-//[POS]: X: 2210.995361 | Y: 1285.725463 | Z: 10.820312 | ROT: 179.601882
+			case PICKUP_TYPE_HOUSE: {
 
-forward OnHouseSaved(houseid);
-public OnHouseSaved(houseid) {
-	if (!mysql_errno(db))
-    {
-        printf("Data inserted successfuly!");
-    }
-    else
-    {
-        printf("Error [%d] when inserting data!", mysql_errno(db));
-    }
+				new hID = PickupData[currentPickup][pkHID];
+				new Float: dist;
+				if (GetPlayerInterior(playerid) == 0) {
+					dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hExtX], Float:HouseData[hID][hExtY], Float:HouseData[hID][hExtZ]);
+					if (dist < HOUSE_ENEX_DISTANCE_THRESHOLD) {
+						EnterHouse(playerid, hID);
+					}
+
+				} else {
+					dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hIntX], Float:HouseData[hID][hIntY], Float:HouseData[hID][hIntZ]);
+					if (dist < HOUSE_ENEX_DISTANCE_THRESHOLD) {
+						ExitHouse(playerid, hID);
+					}
+				}
+			}
+		}
+	}
     return 1;
 }
 
@@ -90,4 +72,18 @@ public OnHouseDataLoaded() {
 			PickupData[HouseData[i][hExtPickupObj]][pkHID] = i;
         }
     }
+}
+
+stock EnterHouse(playerid, hID) {
+    PlayerData[playerid][pInHouseID] = hID;
+    SetPlayerInterior(playerid, HouseData[hID][hInterior]);
+    SetPlayerVirtualWorld(playerid, hID);
+    SetPlayerPos(playerid, Float:HouseData[hID][hIntX], Float:HouseData[hID][hIntY], Float:HouseData[hID][hIntZ]);
+}
+
+stock ExitHouse(playerid, hID) {
+    PlayerData[playerid][pInHouseID] = -1;
+    SetPlayerInterior(playerid, 0);
+    SetPlayerVirtualWorld(playerid, 0);
+    SetPlayerPos(playerid, Float:HouseData[hID][hExtX], Float:HouseData[hID][hExtY], Float:HouseData[hID][hExtZ]);
 }

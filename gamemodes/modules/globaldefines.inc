@@ -74,6 +74,22 @@
 #define ERR_NO_PLAYER_FOUND "[ERROR]: No player found."
 #define ERR_INVALID_VALUE "[ERROR]: Invalid value."
 
+// PICKUP TYPES:
+
+#define PICKUP_TYPE_NONE 0
+#define PICKUP_TYPE_HOUSE 1
+#define PICKUP_TYPE_JOB 2
+
+// ENEX:
+
+#define MAX_ENEX 10
+
+#define ENEX_MAX_NAME 24
+#define ENEX_MAX_DESC 48
+
+#define ENEX_SPAWN_INT 0
+
+
 // FUNCTIONS
 
 #define KEY_PRESSED(%0) \
@@ -86,3 +102,4 @@
 	((newkeys & (%0)) == (%0))
 
 #define DEFAULT_PLAYER_GRAVITY 0.008000
+#define INF 0x7FFFFFFF

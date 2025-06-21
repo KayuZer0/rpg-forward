@@ -7,11 +7,18 @@
 #include "timestamp.inc"
 #include "Pawn.Regex.inc"
 #include <streamer>
+#include <YSI/YSI_Data/y_iterate>
+
+#include "../gamemodes/modules/globaldefines.inc"
 
 new MySQL:db;
 new gMySqlRaceCheck[MAX_PLAYERS];
 
 enum _:pData {
+	pCurrentPickup,
+	pInHouseID,
+	pInBusinessID,
+
 	bool: pIsLoggedIn,
 	pLoginAttempts,
 	pLoginTimer,
@@ -30,21 +37,41 @@ enum _:pData {
 	pAdmin,
 	pMoney,
 };
-
 new PlayerData[MAX_PLAYERS][pData];
 
-#include "../gamemodes/modules/globaldefines.inc"
+enum _:hData {
+	hName[32],
+	hDesc[64],
+	hOwner[MAX_PLAYER_NAME],
+	Float: hExtX,
+	Float: hExtY,
+	Float: hExtZ,
+	Float: hIntX,
+	Float: hIntY,
+	Float: hIntZ,
+	hInterior,
+	hPickupID
+};
+new HouseData[100][hData];
+
+enum __:pkData {
+	pkType,
+	pkHID,
+	pkJBID
+}
+new PickupData[MAX_PICKUPS][pkData];
 
 #include "../gamemodes/modules/utils.inc"
 
 #include "../gamemodes/modules/gui.inc"
 
 #include "../gamemodes/modules/register-login.inc"
-#include "../gamemodes/modules/enex.inc"
 #include "../gamemodes/modules/admincmds.inc"
+#include "../gamemodes/modules/houses.inc"
 
 
 main() {
+	mysql_log(ALL);
 	return 1;
 }
 
@@ -57,7 +84,7 @@ public OnGameModeInit() {
 	AddPlayerClass(0, 2495.3547, -1688.2319, 13.6774, 351.1646, WEAPON_M4, 500, WEAPON_KNIFE, 1, WEAPON_COLT45, 100);
 
 	DisableInteriorEnterExits();
-	InitEnex();
+	LoadHouses();
 
 	return 1;
 }
@@ -74,6 +101,8 @@ public OnGameModeExit() {
 
 	CountDynamicCPs();
 	DestroyAllDynamicCPs();
+
+	return 1;
 }
 
 public OnPlayerConnect(playerid) {
@@ -117,8 +146,39 @@ public OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertextid) {
 }
 
 public OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys) {
-	WORLDMANIP_OnPlayerKeyStateChange(playerid, KEY:newkeys, KEY:oldkeys);
+	if KEY_PRESSED(KEY_SECONDARY_ATTACK) {
+		new currentPickup = PlayerData[playerid][pCurrentPickup];
+		switch (PickupData[currentPickup][pkType]) {
+			case PICKUP_TYPE_HOUSE: {
+				new hID = PickupData[currentPickup][pkHID];
+				if (GetPlayerInterior(playerid) == 0) {
+					new Float: dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hExtX], Float:HouseData[hID][hExtY], Float:HouseData[hID][hExtZ]);
+					if (dist < 1.0) {
+						PlayerData[playerid][pInHouseID] = hID;
+						SetPlayerInterior(playerid, HouseData[hID][hInterior]);
+						SetPlayerVirtualWorld(playerid, hID);
+						SetPlayerPos(playerid, Float: HouseData[hID][hIntX], Float: HouseData[hID][hIntY], Float: HouseData[hID][hIntZ]);
+					}
 
+				} else {
+					new Float: dist = GetPlayerDistanceFromPoint(playerid, Float:HouseData[hID][hIntX], Float:HouseData[hID][hIntY], Float:HouseData[hID][hIntZ]);
+					if (dist < 1.0) {
+						PlayerData[playerid][pInHouseID] = -1;
+						SetPlayerInterior(playerid, 0);
+						SetPlayerVirtualWorld(playerid, 0);
+						SetPlayerPos(playerid, Float: HouseData[hID][hExtX], Float: HouseData[hID][hExtY], Float: HouseData[hID][hExtZ]);
+					}
+				}
+			}
+		}
+	}
+
+	return 1;
+}
+
+public OnPlayerPickUpDynamicPickup(playerid, pickupid){
+	if (PlayerData[playerid][pCurrentPickup] != pickupid) PlayerData[playerid][pCurrentPickup] = pickupid;
+	//SendClientMessage(playerid, COLOR_ORANGE, "You entered pickup with ID %d of type %d", pickupid, PickupData[PlayerData[playerid][pCurrentPickup]][pkType]);
 	return 1;
 }
 

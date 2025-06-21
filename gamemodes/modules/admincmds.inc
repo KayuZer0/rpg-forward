@@ -325,7 +325,7 @@ CMD:enex(playerid, params[]) {
 		return 1;
 	}
 
-	CreateEnex(enexid, objid, 15, "Test", "Test",  Float: pPos, Float: {207.630004, -110.579940, 1005.132812});
+	//CreateEnex(objid, 15, "Test", "Test",  Float: pPos, Float: {207.630004, -110.579940, 1005.132812});
 	SendClientMessage(playerid, COLOR_ORANGE, "Enex created.");
 	return 1;
 }
@@ -373,6 +373,34 @@ CMD:testqps(playerid, params[])
     }
 
     return 1;
+}
+
+CMD:testforloop(playerid, params[]) {
+	CMD_NEEDADMIN(7)
+
+	new howMany;
+
+	if (sscanf(params, "i", howMany)){
+		CMD_USAGE("/testforloop <how many loops>")
+	}
+
+	new loopsDone = 0;
+	new startTime = GetTickCount();
+	for (new i = 0; i < howMany; i++) {
+		if (playerid == 0) {
+			printf("0!");
+		}
+		loopsDone ++;
+	}
+
+	if (loopsDone >= howMany) {
+		new endTime = GetTickCount();
+		new totalTime = endTime - startTime;
+		SendClientMessage(playerid, COLOR_ORANGE, "[For() Test] Executed %d loops in %d ms.", howMany, totalTime);
+		SendClientMessage(playerid, COLOR_ORANGE, "[For() Test]: Approx %0.2f loops per second.", (howMany * 1000.0) / float(totalTime));
+	}
+
+	return 1;
 }
 
 forward OnTestQpsQueryFinished(playerid);

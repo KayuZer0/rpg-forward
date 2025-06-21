@@ -14,6 +14,85 @@ new pRegisterCacheRepeatPassword[MAX_PLAYERS][32];
 #define MINIMUM_PASSWORD 8
 #define MAXIMUM_PASSWORD 32
 
+forward REGISTER_LOGIN_OnPlayerConnect(playerid);
+public REGISTER_LOGIN_OnPlayerConnect(playerid) {
+	gMySqlRaceCheck[playerid]++;
+
+	static const EMPTY_PLAYER[pData];
+	PlayerData[playerid] = EMPTY_PLAYER;
+
+	InitializeTempVars(playerid);
+
+	GetPlayerName(playerid, PlayerData[playerid][pName], MAX_PLAYER_NAME);
+
+	new query[256];
+
+	format(query, sizeof(query), "SELECT * FROM users WHERE pName = '%s' LIMIT 1", PlayerData[playerid][pName]);
+	mysql_tquery(db, query, "OnPlayerDataLoaded", "dd", playerid, gMySqlRaceCheck[playerid]);
+}
+
+forward OnPlayerDataLoaded(playerid, racecheck);
+public OnPlayerDataLoaded(playerid, racecheck) {
+	if (racecheck != gMySqlRaceCheck[playerid]) { return Kick(playerid); }
+
+	cache_get_value_int(0, "pBannedUntil", PlayerData[playerid][pBannedUntil]);
+	cache_get_value(0, "pBannedBy", PlayerData[playerid][pBannedBy], MAX_PLAYER_NAME);
+	cache_get_value(0, "pBanReason", PlayerData[playerid][pBanReason], 128);
+
+	if (PlayerData[playerid][pBannedUntil] != 0) 
+	{
+		new bannedUntilString[128];
+
+		if (PlayerData[playerid][pBannedUntil] == 0) 
+		{
+			format(bannedUntilString, sizeof(bannedUntilString), "Permanent (ban will not expire)");
+
+		} 
+		else if (gettime() < PlayerData[playerid][pBannedUntil]) 
+		{
+			new year, month, day, hour, minute, second;
+			stamp2datetime(PlayerData[playerid][pBannedUntil], year, month, day, hour, minute, second);
+			format(bannedUntilString, sizeof(bannedUntilString), "%02d/%02d/%d - %d:%d", day, month, year, hour, minute, second);
+		} 
+
+		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
+		SendClientMessage(playerid, COLOR_DARKNICERED, "You have been banned!");
+		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
+		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned until: %s", bannedUntilString);
+		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned by: %s", PlayerData[playerid][pBannedBy]);
+		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned for: %s", PlayerData[playerid][pBanReason]);
+		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
+
+		new bannedDialog[128];
+		format(bannedDialog, sizeof(bannedDialog), "\nBanned Until: %s\nBanned by: %s\nBanned for: %s", bannedUntilString, PlayerData[playerid][pBannedBy], PlayerData[playerid][pBanReason]);
+
+		ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, "You have been banned!", bannedDialog, "Quit", "");
+
+		DelayKick(playerid);
+
+		return 1;
+	}
+
+	new dialog[115];
+	if (cache_num_rows() > 0) {
+		cache_get_value(0, "pPassword", PlayerData[playerid][pPassword], 65);
+		cache_get_value(0, "pSalt", PlayerData[playerid][pSalt], 17);
+
+		printf(PlayerData[playerid][pPassword]);
+		printf(PlayerData[playerid][pSalt]);
+
+		PlayerData[playerid][pCacheID] = cache_save();
+
+		format(dialog, sizeof dialog, "This account (%s) is registered. \nPlease login by entering your password in the field below:", PlayerData[playerid][pName]);
+		ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Login", dialog, "Login", "Cancel");
+
+	} else {
+		ShowRegisterMenu(playerid);
+	}
+
+	return 1;
+}
+
 forward REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]);
 public REGISTER_LOGIN_OnDialogResponse(playerid, dialogid, response, listitem, const inputtext[]) {
 	switch (dialogid) {
@@ -182,21 +261,6 @@ public REGISTER_LOGIN_OnPlayerClickPlayerTextDraw(playerid, PlayerText:playertex
 	return 1;
 }
 
-forward REGISTER_LOGIN_OnPlayerConnect(playerid);
-public REGISTER_LOGIN_OnPlayerConnect(playerid) {
-	gMySqlRaceCheck[playerid]++;
-
-	static const EMPTY_PLAYER[pData];
-	PlayerData[playerid] = EMPTY_PLAYER;
-
-	GetPlayerName(playerid, PlayerData[playerid][pName], MAX_PLAYER_NAME);
-
-	new query[256];
-
-	format(query, sizeof(query), "SELECT * FROM users WHERE pName = '%s' LIMIT 1", PlayerData[playerid][pName]);
-	mysql_tquery(db, query, "OnPlayerDataLoaded", "dd", playerid, gMySqlRaceCheck[playerid]);
-}
-
 forward REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason);
 public REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason) {
 	gMySqlRaceCheck[playerid]++;
@@ -238,77 +302,19 @@ public OnPlayerRegistered(playerid) {
 	return 1;
 }
 
-forward OnPlayerDataLoaded(playerid, racecheck);
-public OnPlayerDataLoaded(playerid, racecheck) {
-	if (racecheck != gMySqlRaceCheck[playerid]) { return Kick(playerid); }
-
-	cache_get_value_int(0, "pBannedUntil", PlayerData[playerid][pBannedUntil]);
-	cache_get_value(0, "pBannedBy", PlayerData[playerid][pBannedBy], MAX_PLAYER_NAME);
-	cache_get_value(0, "pBanReason", PlayerData[playerid][pBanReason], 128);
-
-	if (PlayerData[playerid][pBannedUntil] != 0) 
-	{
-		new bannedUntilString[128];
-
-		if (PlayerData[playerid][pBannedUntil] == 0) 
-		{
-			format(bannedUntilString, sizeof(bannedUntilString), "Permanent (ban will not expire)");
-
-		} 
-		else if (gettime() < PlayerData[playerid][pBannedUntil]) 
-		{
-			new year, month, day, hour, minute, second;
-			stamp2datetime(PlayerData[playerid][pBannedUntil], year, month, day, hour, minute, second);
-			format(bannedUntilString, sizeof(bannedUntilString), "%02d/%02d/%d - %d:%d", day, month, year, hour, minute, second);
-		} 
-
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "You have been banned!");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned until: %s", bannedUntilString);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned by: %s", PlayerData[playerid][pBannedBy]);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "Banned for: %s", PlayerData[playerid][pBanReason]);
-		SendClientMessage(playerid, COLOR_DARKNICERED, "------------------------------------------");
-
-		new bannedDialog[128];
-		format(bannedDialog, sizeof(bannedDialog), "\nBanned Until: %s\nBanned by: %s\nBanned for: %s", bannedUntilString, PlayerData[playerid][pBannedBy], PlayerData[playerid][pBanReason]);
-
-		ShowPlayerDialog(playerid, DIALOG_INFO, DIALOG_STYLE_MSGBOX, "You have been banned!", bannedDialog, "Quit", "");
-
-		DelayKick(playerid);
-
-		return 1;
-	}
-
-	new dialog[115];
-	if (cache_num_rows() > 0) {
-		cache_get_value(0, "pPassword", PlayerData[playerid][pPassword], 65);
-		cache_get_value(0, "pSalt", PlayerData[playerid][pSalt], 17);
-
-		printf(PlayerData[playerid][pPassword]);
-		printf(PlayerData[playerid][pSalt]);
-
-		PlayerData[playerid][pCacheID] = cache_save();
-
-		format(dialog, sizeof dialog, "This account (%s) is registered. \nPlease login by entering your password in the field below:", PlayerData[playerid][pName]);
-		ShowPlayerDialog(playerid, DIALOG_LOGIN, DIALOG_STYLE_PASSWORD, "Login", dialog, "Login", "Cancel");
-
-	} else {
-		ShowRegisterMenu(playerid);
-	}
-
-	return 1;
-}
-
 stock AssignInitialPlayerData(playerid) {
-
 	cache_get_value_int(0, "pMoney", PlayerData[playerid][pMoney]);
 	cache_get_value_int(0, "pAdmin", PlayerData[playerid][pAdmin]);
 	cache_get_value(0, "pEmail", PlayerData[playerid][pEmail], 32);
 	cache_get_value_int(0, "pAge", PlayerData[playerid][pAge]);
 
-
 	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
 
 	return 1;
+}
+
+stock InitializeTempVars(playerid) {
+	PlayerData[playerid][pCurrentPickup] = -1;
+	PlayerData[playerid][pInHouseID] = -1;
+	PlayerData[playerid][pInBusinessID] = -1;
 }

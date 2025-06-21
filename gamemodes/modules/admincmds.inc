@@ -129,6 +129,16 @@ CMD:setadmin(playerid, params[]) {
 	PlayerData[targetid][pAdmin] = level;
 	SavePlayer(targetid);
 
+	if (level == 0) {
+		if (Iter_Contains(AdminsOnline, playerid)) {
+			Iter_Remove(AdminsOnline, playerid);
+		}
+	} else {
+		if (!Iter_Contains(AdminsOnline, playerid)) {
+			Iter_Add(AdminsOnline, playerid);
+		}
+	}
+
 	SendClientMessage(playerid, 0xFFA500AA, "You set %s's Admin Level to %d.", targetName, level);
 	SendClientMessage(targetid, 0xFFA500AA, "Admin %s set your Admin Level to %d.", authorName, level);
 
@@ -297,16 +307,12 @@ CMD:a(playerid, params[]) {
 
     if (strlen(message) < 0) {CMD_USAGE("/a <message>")}
 
-    for (new i = 0; i < MAX_PLAYERS; i++) {
-        if (PlayerData[i][pAdmin] != 0) {
-            SendClientMessage(i, COLOR_DARKNICERED, "(/a) Admin %s: {FF5733}%s", authorName, message);
-        }
-    }
+	foreach (new i : AdminsOnline) {
+		SendClientMessage(i, COLOR_DARKNICERED, "(/a) Admin %s: {FF5733}%s", authorName, message);
+	}
 
 	return 1;
 }
-
-// DEBUG:
 
 CMD:enex(playerid, params[]) {
 	new enexid, objid;

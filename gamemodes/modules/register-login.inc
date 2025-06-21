@@ -272,6 +272,8 @@ public REGISTER_LOGIN_OnPlayerDisconnect(playerid, reason) {
 	}
 
 	PlayerData[playerid][pIsLoggedIn] = false;
+
+	Iter_Remove(AdminsOnline, playerid);
 }
 
 forward OnPlayerRegistered(playerid);
@@ -307,6 +309,8 @@ stock AssignInitialPlayerData(playerid) {
 	cache_get_value_int(0, "pAdmin", PlayerData[playerid][pAdmin]);
 	cache_get_value(0, "pEmail", PlayerData[playerid][pEmail], 32);
 	cache_get_value_int(0, "pAge", PlayerData[playerid][pAge]);
+
+	Iter_Add(AdminsOnline, playerid);
 
 	GivePlayerMoney(playerid, PlayerData[playerid][pMoney]);
 

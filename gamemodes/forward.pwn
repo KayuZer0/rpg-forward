@@ -61,6 +61,8 @@ enum __:pkData {
 }
 new PickupData[MAX_PICKUPS][pkData];
 
+new Iterator:AdminsOnline<MAX_PLAYERS>;
+
 #include "../gamemodes/modules/utils.inc"
 
 #include "../gamemodes/modules/gui.inc"
